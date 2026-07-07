@@ -2,6 +2,9 @@ model:
   id: Qwen/Qwen2.5-VL-7B-Instruct
   torch_dtype: bfloat16
   load_in_4bit: true
+  bnb_4bit_use_double_quant: true
+  bnb_4bit_quant_type: nf4
+  bnb_4bit_compute_dtype: bfloat16
   max_pixels: 1003520
 
 dataset:
@@ -24,13 +27,23 @@ lora:
 training:
   output_dir: outputs/qwen25vl-chartqa-smoke
   per_device_train_batch_size: 1
+  per_device_eval_batch_size: 1
   gradient_accumulation_steps: 8
   learning_rate: 2.0e-5
   num_train_epochs: 1
   max_steps: 20
+  max_seq_length: 128
   logging_steps: 1
+  eval_steps: 20
   save_steps: 20
+  eval_strategy: steps
+  save_strategy: steps
+  optim: paged_adamw_32bit
+  max_grad_norm: 1.0
+  warmup_steps: 0
+  remove_unused_columns: false
   gradient_checkpointing: true
+  load_best_model_at_end: false
 
 evaluation:
   max_samples: 100

@@ -14,10 +14,14 @@
 - 新增 `src/chartvqa/config.py`、`src/chartvqa/data.py`、`src/chartvqa/prompting.py`，完成配置加载、ChartQA 样本规范化和 Qwen2.5-VL chat messages 格式化。
 - 新增 `tests/test_config.py`、`tests/test_data.py`、`tests/test_prompting.py`，覆盖本地不消耗算力的核心链路。
 - 新增 `实习面试资料.md`，记录本阶段做了什么，并整理面向实习面试的关键问答。
+- 新增 `docs/superpowers/specs/2026-07-07-smoke-training-entry-design.md` 和 `docs/superpowers/plans/2026-07-07-smoke-training-entry.md`，明确远程 smoke training 入口设计。
+- 新增 `src/chartvqa/modeling.py`，封装 4-bit BitsAndBytes 参数、LoRA 参数和 Qwen2.5-VL model/processor 加载入口。
+- 新增 `src/chartvqa/training.py` 和 `scripts/train_lora.py`，提供 TRL SFT 参数、VLM collator、trainer 组装和远程训练命令入口。
+- 新增 `tests/test_modeling.py`、`tests/test_training.py`、`tests/test_train_lora_script.py`，在本地验证不依赖 GPU 的 smoke training 参数链路。
 
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090。
-- 当前阶段：本地训练前脚手架已完成，下一步进入模型与 LoRA 加载、smoke training 脚本和远程 AutoDL 验证准备。
+- 当前阶段：远程 smoke training 标准入口已完成，下一步交给 Claude Code 在 AutoDL 上运行环境检查和 `python scripts/train_lora.py --config configs/qwen25vl_chartqa.yaml --max-steps 1 --skip-initial-eval`。
