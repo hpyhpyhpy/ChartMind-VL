@@ -1,0 +1,19 @@
+{
+  "id": "edgarmevaa/finetuning-qlora-et-ia3-donut",
+  "id_no": 53477783,
+  "title": "Finetuning Qlora et IA3 DonUT",
+  "code_file": "finetuning-qlora-et-ia3-donut.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "keywords": [],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-images/python@sha256:24ca49e254f48e56cb9b636f989b4237af10a8dcb54f94ebb78d92bdcf7bea3e",
+  "machine_shape": "None"
+}

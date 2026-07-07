@@ -1,0 +1,25 @@
+{
+  "id": "ammarnassanalhajali/fine-tune-layoutlm-on-sroie-dataset",
+  "id_no": 21111984,
+  "title": "Fine-Tune LayoutLM on SROIE dataset",
+  "code_file": "fine-tune-layoutlm-on-sroie-dataset.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "deep learning"
+  ],
+  "dataset_sources": [
+    "jpmiller/layoutlm",
+    "patriciamedyna/layoutlm",
+    "onchutrng/sroie20192021"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:01c86d6f219a3e18705cba6a0dd085e2d0aa7b015d8198e15d49f484965f9c6c",
+  "machine_shape": "Gpu"
+}

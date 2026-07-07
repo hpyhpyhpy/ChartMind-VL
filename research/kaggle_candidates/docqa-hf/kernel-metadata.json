@@ -1,0 +1,25 @@
+{
+  "id": "aisuko/document-question-answering",
+  "id_no": 47750734,
+  "title": "Document Question Answering",
+  "code_file": "document-question-answering.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "multimodal",
+    "question answering",
+    "deep learning",
+    "nlp",
+    "gpu"
+  ],
+  "dataset_sources": [],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:191a1a775ae15528181517b56485b2536e2e1a9fe80f5dab3d19bae0b68adf61",
+  "machine_shape": "NvidiaTeslaT4"
+}

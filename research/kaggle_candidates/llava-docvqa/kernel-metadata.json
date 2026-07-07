@@ -1,0 +1,21 @@
+{
+  "id": "quangduc3122004/documentvqa-finetune-llava7b",
+  "id_no": 102700490,
+  "title": "DocumentVQA/Finetune-LLava7B",
+  "code_file": "documentvqa-finetune-llava7b.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "keywords": [],
+  "dataset_sources": [
+    "quangduc3122004/docvqa-minidata-1200-samples"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-images/python@sha256:bf0b407a5ed73626191ae2259063a0090ae36666c8f00ffdfae3fb543eae750d",
+  "machine_shape": "None"
+}

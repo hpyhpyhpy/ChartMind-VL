@@ -1,0 +1,25 @@
+{
+  "id": "urbikn/layoutlm-using-the-sroie-dataset",
+  "id_no": 14619400,
+  "title": "LayoutLM using the SROIE dataset",
+  "code_file": "layoutlm-using-the-sroie-dataset.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": false,
+  "enable_tpu": false,
+  "enable_internet": false,
+  "keywords": [
+    "transformers",
+    "text",
+    "nlp"
+  ],
+  "dataset_sources": [
+    "urbikn/sroie-datasetv2"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-images/python@sha256:bc1e76798d83b37053448b674881add770c03e22d082e2e6008c92c7f7fcc86a",
+  "machine_shape": "None"
+}

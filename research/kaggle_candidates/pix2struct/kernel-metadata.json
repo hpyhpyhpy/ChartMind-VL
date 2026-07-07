@@ -1,0 +1,29 @@
+{
+  "id": "heyytanay/training-pix2struct-pytorch-amp-w-b",
+  "id_no": 36573030,
+  "title": "[training] Pix2Struct PyTorch + AMP + W&B",
+  "code_file": "training-pix2struct-pytorch-amp-w-b.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": false,
+  "enable_gpu": true,
+  "enable_tpu": false,
+  "enable_internet": true,
+  "keywords": [
+    "gpu",
+    "pytorch",
+    "deep learning",
+    "multimodal",
+    "beginner"
+  ],
+  "dataset_sources": [
+    "heyytanay/benetech-processed-data-json"
+  ],
+  "kernel_sources": [],
+  "competition_sources": [
+    "benetech-making-graphs-accessible"
+  ],
+  "model_sources": [],
+  "docker_image": "gcr.io/kaggle-private-byod/python@sha256:8ac7a063aca3e6bb70689a681b51a9974d456255f79ddf2723e3fefce7ef44be",
+  "machine_shape": "Gpu"
+}
