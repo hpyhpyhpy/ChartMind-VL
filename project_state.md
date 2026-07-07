@@ -1,13 +1,17 @@
-# Project State
+# 项目状态
 
 ## 2026-07-07
 
-- Added `_ai_rules.md` as the project-level AI collaboration rules.
-- Added this `project_state.md` file to track completed, reviewable project tasks.
-- Updated `_ai_rules.md` to require Chinese by default for explanatory documents, plans, experiment notes, README content, comments, and user-facing explanations.
+- 新增 `_ai_rules.md`，作为项目级 AI 协作规则文件。
+- 新增 `project_state.md`，用于记录每次可验收任务的完成状态。
+- 更新 `_ai_rules.md`，要求说明类文档、开发计划、实验记录、README、注释和面向用户的解释默认使用中文。
+- 将 `CLAUDE.md` 改写为中文项目声明，说明项目定位、启动指令、当前主线和工作原则。
+- 将设计说明 `docs/superpowers/specs/2026-07-07-vlm-chartqa-cloud-training-design.md` 改写为中文。
+- 将实施计划 `docs/superpowers/plans/2026-07-07-docvqa-rag-main-project.md` 改写为中文。
 
-Current status:
+当前状态：
 
-- Repository: `ChartMind-VL`
-- Main project direction: enterprise chart/report multimodal VQA fine-tuning system.
-- Primary route: Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090.
+- 仓库：`ChartMind-VL`
+- 主项目方向：面向企业图表与报表的多模态问答微调系统。
+- 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090。
+- 当前阶段：文档规范和项目方向已确定，下一步进入 AutoDL 云端准备与项目脚手架实现。

@@ -1,379 +1,396 @@
-# Enterprise Chart and Report VQA Implementation Plan
+# ChartMind-VL 实施计划
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **给后续执行者的要求：** 按任务逐项执行。每完成一个可验收任务，需要更新 `project_state.md` 并提交一次 git commit。任务勾选使用 `- [ ]` 格式维护进度。
 
-**Goal:** Build a resume-ready multimodal question answering and fine-tuning project for enterprise charts, reports, and business document screenshots, using Qwen2.5-VL + ChartQA + LoRA/QLoRA as the main route and AutoDL 4090 as the training environment.
+**目标：** 构建一个可写入简历、可演示、可评估的多模态问答与微调项目。项目面向企业图表、报表和业务文档截图，主路线为 Qwen2.5-VL + ChartQA + LoRA/QLoRA，并使用 AutoDL 单卡 4090 作为训练环境。
 
-**Architecture:** Start with a modern VLM fine-tuning pipeline: chart/report image + question -> Qwen2.5-VL prompt formatting -> zero-shot baseline -> 4-bit QLoRA training -> held-out evaluation -> badcase analysis -> Gradio demo. Keep OCR/RAG as a later extension for report PDFs and long business documents, not the first-stage core.
+**架构：** 第一阶段采用现代 VLM 微调流程：图表/报表图片 + 问题 -> Qwen2.5-VL prompt 格式化 -> zero-shot baseline -> 4-bit QLoRA 训练 -> 验证集评估 -> badcase 分析 -> Gradio Demo。OCR/RAG 保留为后续处理长报表 PDF 的扩展，不作为第一阶段核心。
 
-**Tech Stack:** Python 3.10/3.11, AutoDL RTX 4090, Qwen2.5-VL-7B-Instruct, ChartQA, HuggingFace Datasets, Transformers, PEFT, TRL, bitsandbytes, Gradio, pandas, pytest, optional TensorBoard or Weights & Biases.
+**技术栈：** Python 3.10/3.11、AutoDL RTX 4090、Qwen2.5-VL-7B-Instruct、ChartQA、HuggingFace Datasets、Transformers、PEFT、TRL、bitsandbytes、Gradio、pandas、pytest，可选 TensorBoard 或 Weights & Biases。
 
-## Global Constraints
+## 全局约束
 
-- Positioning: AI application engineering, focused on multimodal report/chart understanding, VLM fine-tuning, evaluation, and later preference optimization.
-- Short-term target: produce a runnable, explainable, resume-ready training and inference MVP in 2-3 days after cloud GPU is available.
-- Main project: multimodal VQA system for enterprise charts, reports, dashboards, and business document screenshots.
-- MVP priority: cloud training smoke run > zero-shot baseline > LoRA fine-tuning > evaluation > badcase analysis > Gradio demo > reward reranking / DPO / GRPO-like exploration.
-- Resume wording: describe the work as open-source reproduction plus secondary implementation and evaluation, not as a fully original system.
-- Avoid: turning the project into a pure backend CRUD system.
-- Demo requirement: support image upload or sample selection, natural language question, base-vs-LoRA model choice, generated answer, and sample answer comparison where labels exist.
-- Evaluation requirement: include exact match, token F1, numeric accuracy, manual accuracy, hallucination/error categories, and zero-shot vs LoRA comparison.
-- Cloud constraint: training runs on a domestic GPU platform, preferably AutoDL with one RTX 4090 24GB, using SSH/JupyterLab/tmux.
+- 项目定位：AI 应用工程候选人的多模态图表/报表理解、VLM 微调、评估和后续偏好优化项目。
+- 短期目标：云端 GPU 可用后，用 2-3 天做出可运行、可解释、可展示的训练和推理 MVP。
+- 主项目：面向企业图表、报表、数据看板和业务文档截图的多模态 VQA 系统。
+- MVP 优先级：云端训练 smoke run > zero-shot baseline > LoRA 微调 > 评估 > badcase 分析 > Gradio Demo > reward reranking / DPO / GRPO-style 探索。
+- 简历表达：必须写成基于公开 notebook 和公开数据集的二次实现、改造和评估，不伪装成完全原创。
+- 避免方向：不要把项目做成纯后端 CRUD，也不要只停留在 notebook 复现。
+- Demo 要求：支持图片上传或样例选择、自然语言问题、base-vs-LoRA 模型选择、生成答案、可选参考答案展示。
+- 评估要求：包含 exact match、token F1、numeric accuracy、人工准确率、错误分类、zero-shot vs LoRA 对比。
+- 云端约束：训练在国内云平台完成，优先 AutoDL 单卡 RTX 4090 24GB，使用 SSH、JupyterLab 和 `tmux`。
 
 ---
 
-## Recommended Repository Structure
-
-- `README.md`: project overview, quickstart, cloud training guide, architecture diagram, demo screenshots, evaluation summary, resume bullets.
-- `requirements.txt`: minimal runtime dependencies for MVP.
-- `configs/qwen25vl_chartqa.yaml`: model, dataset, LoRA, quantization, training, and evaluation settings.
-- `data/samples/`: small public sample chart/report images committed only if licensing allows; otherwise keep download instructions.
-- `data/eval/chartqa_eval_sample.csv`: small exported evaluation slice with question, answer, image id, and question type.
-- `src/chartvqa/config.py`: typed configuration loader.
-- `src/chartvqa/data.py`: load ChartQA and format image-question-answer samples.
-- `src/chartvqa/prompting.py`: convert samples into Qwen2.5-VL chat format.
-- `src/chartvqa/modeling.py`: load base model, processor, quantization, and LoRA adapter.
-- `src/chartvqa/training.py`: reusable training entry points.
-- `src/chartvqa/evaluation.py`: compute EM, token F1, numeric accuracy, and error fields.
-- `src/chartvqa/inference.py`: run base or LoRA inference on one image/question pair.
-- `app.py`: Gradio demo.
-- `scripts/cloud_setup_autodl.sh`: AutoDL environment setup notes as executable shell steps.
-- `scripts/train_lora.py`: run QLoRA fine-tuning.
-- `scripts/run_eval.py`: run zero-shot and LoRA evaluation and export reports.
-- `reports/eval_results.csv`: generated evaluation output.
-- `reports/badcase_analysis.md`: manual badcase summary.
-- `reports/experiments.md`: experiment table for LoRA ranks, learning rates, and data fractions.
-- `tests/`: unit tests for prompt formatting, metric normalization, numeric matching, and config loading.
-
-## Milestone 0: Project Decision and Cloud Setup, Half Day
-
-**Deliverable:** confirm the Qwen2.5-VL + ChartQA LoRA route and prepare AutoDL for training.
-
-Approved choice:
-
-- Dataset direction: ChartQA first, DocVQA/report screenshots later.
-- MVP parser: VLM-first, not OCR-first.
-- Base model: `Qwen/Qwen2.5-VL-7B-Instruct`.
-- Fine-tuning: 4-bit QLoRA with PEFT.
-- Cloud platform: AutoDL domestic GPU instance, one RTX 4090 24GB.
-- Demo framework: Gradio.
-- Evaluation size: first 100-300 held-out examples for automated metrics, plus 20-30 manually inspected examples.
-
-Decision criteria:
-
-- The baseline must run a smoke training job on one 4090.
-- The dataset must contain image-question-answer triples.
-- The first training run must be small and reproducible before scaling.
-- The project must be easy to package as a current business scenario.
-
-Checkpoint:
-
-- [ ] Record selected Kaggle reference notebook, dataset, model, and scenario in `README.md`.
-- [ ] Create AutoDL instance with RTX 4090 24GB, PyTorch image, JupyterLab, and SSH.
-- [ ] Configure HuggingFace and Kaggle tokens on the cloud instance without committing secrets.
-- [ ] Run a minimal command that imports `torch`, checks CUDA, and prints GPU memory.
-- [ ] Start a `tmux` session and verify a dummy long-running process survives SSH disconnect.
-
-## Milestone 1: Training MVP, Day 1
-
-**Deliverable:** cloud command can run one Qwen2.5-VL + ChartQA QLoRA smoke training job.
-
-### Task 1: Bootstrap Project
-
-**Files:**
-- Create: `requirements.txt`
-- Create: `configs/qwen25vl_chartqa.yaml`
-- Create: `src/chartvqa/config.py`
-- Create: `tests/test_config.py`
-- Create: `scripts/cloud_setup_autodl.sh`
-
-**Interfaces:**
-- Produces: `load_config(path: str = "configs/qwen25vl_chartqa.yaml") -> dict`
-- Consumes: none
-
-Steps:
-
-- [ ] Create minimal dependencies: `torch`, `transformers`, `datasets`, `accelerate`, `peft`, `trl`, `bitsandbytes`, `qwen-vl-utils`, `gradio`, `pydantic`, `pyyaml`, `pillow`, `pandas`, `numpy`, `pytest`, `evaluate`, `scikit-learn`.
-- [ ] Add `configs/qwen25vl_chartqa.yaml` with model id, dataset id, data split fractions, LoRA rank, LoRA alpha, learning rate, batch size, gradient accumulation, max sequence length, output dir, and eval settings.
-- [ ] Add `scripts/cloud_setup_autodl.sh` with environment checks, package installation, CUDA check, and cache directory setup.
-- [ ] Write a config test that loads the YAML and asserts required keys exist.
-- [ ] Implement `load_config`.
-- [ ] Run `pytest tests/test_config.py -v`.
-- [ ] Commit with message `chore: bootstrap chartvqa cloud project`.
-
-### Task 2: ChartQA Data Formatting
-
-**Files:**
-- Create: `src/chartvqa/data.py`
-- Create: `src/chartvqa/prompting.py`
-- Create: `tests/test_prompting.py`
-
-**Interfaces:**
-- Produces: `load_chartqa_splits(config: dict) -> tuple`
-- Produces: `format_chat_sample(sample: dict, system_message: str) -> list[dict]`
-- Produces: `ChartQASample(image, question: str, answer: str, question_type: str | None)`
-
-Steps:
-
-- [ ] Load `HuggingFaceM4/ChartQA` with configurable split slices such as `train[:1%]`, `val[:1%]`, and `test[:1%]`.
-- [ ] Normalize each sample into image, query, and answer fields.
-- [ ] Format each sample into Qwen2.5-VL chat messages with system, user image/question, and assistant answer.
-- [ ] Test that formatted messages contain one image item and one text question item.
-- [ ] Run `pytest tests/test_prompting.py -v`.
-- [ ] Commit with message `feat: format chartqa for qwen vl`.
-
-### Task 3: Model and LoRA Loading
+## 推荐仓库结构
+
+- `README.md`：项目概览、快速开始、云端训练指南、架构图、Demo 截图、评估摘要、简历 bullet。
+- `requirements.txt`：MVP 所需依赖。
+- `configs/qwen25vl_chartqa.yaml`：模型、数据集、LoRA、量化、训练和评估配置。
+- `data/samples/`：少量公开图表/报表样例；如果许可不适合提交，则只保留下载说明。
+- `data/eval/chartqa_eval_sample.csv`：导出的评估样例，包含问题、答案、图片 id 和问题类型。
+- `src/chartvqa/config.py`：配置加载。
+- `src/chartvqa/data.py`：加载 ChartQA，并规范化图像-问题-答案样本。
+- `src/chartvqa/prompting.py`：将样本转换为 Qwen2.5-VL chat 格式。
+- `src/chartvqa/modeling.py`：加载基础模型、processor、量化配置和 LoRA adapter。
+- `src/chartvqa/training.py`：训练流程封装。
+- `src/chartvqa/evaluation.py`：计算 EM、token F1、numeric accuracy 和错误字段。
+- `src/chartvqa/inference.py`：对单张图片和问题执行 base 或 LoRA 推理。
+- `app.py`：Gradio Demo。
+- `scripts/cloud_setup_autodl.sh`：AutoDL 环境准备脚本和检查命令。
+- `scripts/train_lora.py`：启动 QLoRA 微调。
+- `scripts/run_eval.py`：执行 zero-shot 和 LoRA 评估，并导出报告。
+- `reports/eval_results.csv`：评估结果。
+- `reports/badcase_analysis.md`：人工 badcase 分析。
+- `reports/experiments.md`：LoRA rank、学习率、数据比例等实验记录。
+- `tests/`：prompt 格式、指标归一化、数值匹配和配置加载测试。
 
-**Files:**
-- Create: `src/chartvqa/modeling.py`
-- Create: `tests/test_lora_config.py`
+## 里程碑 0：项目决策与云端准备，半天
 
-**Interfaces:**
-- Produces: `build_bnb_config(config: dict)`
-- Produces: `build_lora_config(config: dict)`
-- Produces: `load_model_and_processor(config: dict, train: bool = False)`
+**交付物：** 确认 Qwen2.5-VL + ChartQA LoRA 路线，并准备 AutoDL 训练环境。
 
-Steps:
+已确认选择：
 
-- [ ] Implement 4-bit BitsAndBytes config: NF4, double quantization, bf16 compute where available.
-- [ ] Implement LoRA config with first baseline `r=8`, `lora_alpha=16`, `lora_dropout=0.1`, target modules `q_proj` and `v_proj`.
-- [ ] Ensure training mode disables cache and enables gradient checkpointing.
-- [ ] Test config construction without loading the full model.
-- [ ] Commit with message `feat: add qwen vl lora loading`.
+- 数据方向：先做 ChartQA，后续扩展 DocVQA 或业务报表截图。
+- MVP 解析方式：VLM-first，不以 OCR-first 为第一阶段主线。
+- 基础模型：`Qwen/Qwen2.5-VL-7B-Instruct`。
+- 微调方式：4-bit QLoRA + PEFT。
+- 云平台：AutoDL 国内 GPU 实例，单卡 RTX 4090 24GB。
+- Demo 框架：Gradio。
+- 评估规模：先用 100-300 条 held-out 样本做自动指标，再人工检查 20-30 条。
 
-### Task 4: Smoke Training Script
+决策标准：
 
-**Files:**
-- Create: `src/chartvqa/training.py`
-- Create: `scripts/train_lora.py`
+- baseline 必须能在单卡 4090 上跑通 smoke training。
+- 数据集必须包含图片-问题-答案三元组。
+- 第一轮训练必须小规模、可复现，再逐步扩大。
+- 项目必须能包装成真实的企业图表/报表问答场景。
 
-**Interfaces:**
-- Produces: `build_trainer(config: dict)`
-- Produces: CLI command `python scripts/train_lora.py --config configs/qwen25vl_chartqa.yaml --max-steps 1`
+检查清单：
 
-Steps:
+- [ ] 在 `README.md` 记录参考 notebook、数据集、模型和场景选择。
+- [ ] 创建 AutoDL RTX 4090 24GB 实例，启用 PyTorch 镜像、JupyterLab 和 SSH。
+- [ ] 在云端配置 HuggingFace 和 Kaggle token，不提交任何密钥。
+- [ ] 运行最小 CUDA 检查命令，确认 `torch` 可以识别 GPU 和显存。
+- [ ] 创建 `tmux` 会话，验证 SSH 断开后任务仍可继续运行。
 
-- [ ] Convert the reference Kaggle notebook training logic into a script.
-- [ ] Implement a collator that applies Qwen2.5-VL chat template and masks padding labels.
-- [ ] Run one-step training first with `--max-steps 1`.
-- [ ] Save adapter output under `outputs/qwen25vl-chartqa-smoke`.
-- [ ] Record GPU memory usage and wall-clock time in `reports/experiments.md`.
-- [ ] Commit with message `feat: add qwen chartqa smoke training`.
+## 里程碑 1：训练 MVP，第 1 天
 
-## Milestone 2: Evaluation and Demo, Day 2
+**交付物：** 云端命令可以跑通一次 Qwen2.5-VL + ChartQA QLoRA smoke training。
 
-**Deliverable:** compare base model and LoRA adapter on held-out examples, then show results in a small Gradio demo.
+### 任务 1：项目脚手架
 
-### Task 5: Evaluation Metrics
+**文件：**
 
-**Files:**
-- Create: `src/chartvqa/evaluation.py`
-- Create: `scripts/run_eval.py`
-- Create: `tests/test_evaluation.py`
+- 创建：`requirements.txt`
+- 创建：`configs/qwen25vl_chartqa.yaml`
+- 创建：`src/chartvqa/config.py`
+- 创建：`tests/test_config.py`
+- 创建：`scripts/cloud_setup_autodl.sh`
 
-**Interfaces:**
-- Produces: `exact_match(prediction: str, answer: str) -> float`
-- Produces: `token_f1(prediction: str, answer: str) -> float`
-- Produces: `numeric_match(prediction: str, answer: str) -> float`
-- Produces: CLI command `python scripts/run_eval.py --adapter outputs/qwen25vl-chartqa-smoke`
+**接口：**
 
-Steps:
+- 产出：`load_config(path: str = "configs/qwen25vl_chartqa.yaml") -> dict`
 
-- [ ] Test exact match with normalized case and whitespace.
-- [ ] Test token F1 for partial answers.
-- [ ] Test numeric matching with commas, percent signs, and simple decimals.
-- [ ] Implement base model evaluation on a small held-out slice.
-- [ ] Implement LoRA adapter evaluation on the same slice.
-- [ ] Export `reports/eval_results.csv`.
-- [ ] Commit with message `feat: evaluate chartqa answers`.
+步骤：
 
-### Task 6: Gradio Demo
+- [ ] 添加最小依赖：`torch`、`transformers`、`datasets`、`accelerate`、`peft`、`trl`、`bitsandbytes`、`qwen-vl-utils`、`gradio`、`pydantic`、`pyyaml`、`pillow`、`pandas`、`numpy`、`pytest`、`evaluate`、`scikit-learn`。
+- [ ] 在 `configs/qwen25vl_chartqa.yaml` 中写入模型 id、数据集 id、数据切片、LoRA rank、LoRA alpha、学习率、batch size、梯度累积、最大序列长度、输出目录和评估设置。
+- [ ] 在 `scripts/cloud_setup_autodl.sh` 中加入环境检查、依赖安装、CUDA 检查和缓存目录设置。
+- [ ] 编写配置测试，确认 YAML 中包含必要字段。
+- [ ] 实现 `load_config`。
+- [ ] 运行 `pytest tests/test_config.py -v`。
+- [ ] 提交：`chore: bootstrap chartvqa cloud project`。
 
-**Files:**
-- Create: `src/chartvqa/inference.py`
-- Create: `app.py`
+### 任务 2：ChartQA 数据格式化
 
-**Interfaces:**
-- Produces: `answer_chart(image, question: str, adapter_path: str | None, config: dict) -> str`
+**文件：**
 
-Steps:
+- 创建：`src/chartvqa/data.py`
+- 创建：`src/chartvqa/prompting.py`
+- 创建：`tests/test_prompting.py`
 
-- [ ] Build a Gradio UI with chart/report image upload and question input.
-- [ ] Add a mode selector: base model or LoRA adapter.
-- [ ] Display generated answer and optional reference answer for sample cases.
-- [ ] Test with at least 5 ChartQA examples.
-- [ ] Save demo screenshots under `reports/screenshots/`.
-- [ ] Commit with message `feat: add chartvqa gradio demo`.
+**接口：**
 
-### Task 7: Initial README
+- 产出：`load_chartqa_splits(config: dict) -> tuple`
+- 产出：`format_chat_sample(sample: dict, system_message: str) -> list[dict]`
+- 产出：`ChartQASample(image, question: str, answer: str, question_type: str | None)`
 
-**Files:**
-- Create or modify: `README.md`
+步骤：
 
-Steps:
+- [ ] 使用可配置切片加载 `HuggingFaceM4/ChartQA`，例如 `train[:1%]`、`val[:1%]`、`test[:1%]`。
+- [ ] 将每条样本规范化为 image、query、answer 字段。
+- [ ] 将样本转换为 Qwen2.5-VL chat messages，包含 system、user image/question 和 assistant answer。
+- [ ] 测试格式化结果中包含一个 image 项和一个 text question 项。
+- [ ] 运行 `pytest tests/test_prompting.py -v`。
+- [ ] 提交：`feat: format chartqa for qwen vl`。
 
-- [ ] Add project positioning: open-source reproduction plus Qwen2.5-VL LoRA secondary implementation.
-- [ ] Add architecture: chart/report image -> VLM prompt -> base inference -> LoRA training -> evaluation -> demo.
-- [ ] Add AutoDL quickstart commands.
-- [ ] Add sample input/output screenshots.
-- [ ] Add current limitations.
-- [ ] Add short resume bullets using restrained wording.
-- [ ] Commit with message `docs: add initial project readme`.
+### 任务 3：模型与 LoRA 加载
 
-### Task 8: Success and Failure Case Log
+**文件：**
 
-**Files:**
-- Create: `reports/case_studies.md`
+- 创建：`src/chartvqa/modeling.py`
+- 创建：`tests/test_lora_config.py`
 
-Steps:
+**接口：**
 
-- [ ] Record 5 successful chart/report QA examples.
-- [ ] Record 5 failed chart/report QA examples.
-- [ ] For each failure, label one primary cause: chart type misunderstanding, wrong axis or legend, numeric scale error, multi-step comparison error, answer format mismatch, hallucinated value.
-- [ ] Add one screenshot or copied output per case where useful.
-- [ ] Commit with message `docs: add qa case studies`.
+- 产出：`build_bnb_config(config: dict)`
+- 产出：`build_lora_config(config: dict)`
+- 产出：`load_model_and_processor(config: dict, train: bool = False)`
 
-## Milestone 3: LoRA Experiments, Day 3 to Day 7
+步骤：
 
-**Deliverable:** a comparison table that can be discussed in interviews.
+- [ ] 实现 4-bit BitsAndBytes 配置：NF4、double quantization、可用时使用 bf16 compute。
+- [ ] 实现第一组 LoRA 配置：`r=8`、`lora_alpha=16`、`lora_dropout=0.1`，target modules 为 `q_proj` 和 `v_proj`。
+- [ ] 训练模式下关闭 cache，并启用 gradient checkpointing。
+- [ ] 编写测试，只检查配置构造，不加载完整模型。
+- [ ] 提交：`feat: add qwen vl lora loading`。
 
-### Task 9: Controlled LoRA Runs
+### 任务 4：Smoke Training 脚本
 
-**Files:**
-- Modify: `configs/qwen25vl_chartqa.yaml`
-- Modify: `scripts/train_lora.py`
-- Modify: `reports/experiments.md`
+**文件：**
 
-Experiment grid:
+- 创建：`src/chartvqa/training.py`
+- 创建：`scripts/train_lora.py`
 
-- data fraction: `1%`, `3%`, optionally `5%`
-- LoRA rank: `8`, `16`
-- learning rate: `2e-5`, optionally `1e-4`
-- max epochs: `1`
+**接口：**
 
-Steps:
+- 产出：`build_trainer(config: dict)`
+- 产出命令：`python scripts/train_lora.py --config configs/qwen25vl_chartqa.yaml --max-steps 1`
 
-- [ ] Run the smoke configuration first.
-- [ ] Run at least two real LoRA configurations.
-- [ ] Record dataset size, trainable parameters, GPU memory, training time, eval loss, EM, token F1, and numeric accuracy.
-- [ ] Save adapters under separate output directories.
-- [ ] Add a compact experiment table.
-- [ ] Commit with message `exp: compare chartqa lora settings`.
+步骤：
 
-### Task 10: Badcase Analysis
+- [ ] 将 Kaggle 参考 notebook 中的训练逻辑整理为脚本。
+- [ ] 实现 collator，应用 Qwen2.5-VL chat template，并正确 mask padding labels。
+- [ ] 先运行 `--max-steps 1`。
+- [ ] 将 adapter 保存到 `outputs/qwen25vl-chartqa-smoke`。
+- [ ] 在 `reports/experiments.md` 记录显存占用和运行时间。
+- [ ] 提交：`feat: add qwen chartqa smoke training`。
 
-**Files:**
-- Create: `reports/badcase_analysis.md`
-- Modify: `README.md`
+## 里程碑 2：评估与 Demo，第 2 天
 
-Steps:
+**交付物：** 在 held-out 样本上对比 base model 和 LoRA adapter，并用 Gradio 展示效果。
 
-- [ ] Group failed cases into chart type misunderstanding, wrong axis or legend, numeric scale error, multi-step comparison error, answer format mismatch, hallucinated value.
-- [ ] Include one representative example for each observed group.
-- [ ] Add practical next-step fixes for the top 2 failure categories.
-- [ ] Summarize the badcase distribution in README.
-- [ ] Commit with message `docs: add chartqa badcase analysis`.
+### 任务 5：评估指标
 
-## Milestone 4: Scenario Expansion, Day 7 to Day 14
+**文件：**
 
-**Deliverable:** make the project feel like an enterprise report assistant, not only a benchmark notebook.
+- 创建：`src/chartvqa/evaluation.py`
+- 创建：`scripts/run_eval.py`
+- 创建：`tests/test_evaluation.py`
 
-### Task 11: Report Screenshot Samples
+**接口：**
 
-**Files:**
-- Create: `data/samples/README.md`
-- Modify: `app.py`
-- Modify: `reports/case_studies.md`
+- 产出：`exact_match(prediction: str, answer: str) -> float`
+- 产出：`token_f1(prediction: str, answer: str) -> float`
+- 产出：`numeric_match(prediction: str, answer: str) -> float`
+- 产出命令：`python scripts/run_eval.py --adapter outputs/qwen25vl-chartqa-smoke`
 
-Steps:
+步骤：
 
-- [ ] Add 5-10 public or self-created business chart/report screenshots with licensing notes.
-- [ ] Write natural-language questions for each sample.
-- [ ] Run base and LoRA inference on these samples.
-- [ ] Record where ChartQA fine-tuning helps and where it does not transfer.
-- [ ] Commit with message `data: add report screenshot samples`.
+- [ ] 测试 exact match，处理大小写和空白字符归一化。
+- [ ] 测试 token F1，支持部分匹配。
+- [ ] 测试 numeric matching，处理逗号、百分号和简单小数。
+- [ ] 实现 base model 在小规模 held-out 样本上的评估。
+- [ ] 实现 LoRA adapter 在相同样本上的评估。
+- [ ] 导出 `reports/eval_results.csv`。
+- [ ] 提交：`feat: evaluate chartqa answers`。
 
-### Task 12: Optional OCR/RAG Extension
+### 任务 6：Gradio Demo
 
-**Files:**
-- Create: `src/chartvqa/rag.py`
-- Create: `reports/rag_extension.md`
+**文件：**
 
-Steps:
+- 创建：`src/chartvqa/inference.py`
+- 创建：`app.py`
 
-- [ ] Keep this optional unless the VLM fine-tuning route is already stable.
-- [ ] For long report PDFs, extract text with OCR or PDF text extraction.
-- [ ] Retrieve relevant report text snippets as auxiliary context.
-- [ ] Compare VLM-only answer vs VLM plus retrieved context on a few samples.
-- [ ] Commit with message `exp: explore report rag extension`.
+**接口：**
 
-## Milestone 5: Preference Optimization, Week 3+
+- 产出：`answer_chart(image, question: str, adapter_path: str | None, config: dict) -> str`
 
-**Deliverable:** start with reward reranking and DPO data construction, not a premature GRPO claim.
+步骤：
 
-Scope:
+- [ ] 构建 Gradio UI，支持图表/报表图片上传和问题输入。
+- [ ] 添加模式选择：base model 或 LoRA adapter。
+- [ ] 展示模型答案，并在样例模式下展示参考答案。
+- [ ] 至少用 5 条 ChartQA 样例测试。
+- [ ] 将 Demo 截图保存到 `reports/screenshots/`。
+- [ ] 提交：`feat: add chartvqa gradio demo`。
 
-- Generate multiple candidate answers for the same chart question.
-- Score candidates using answer match, numeric consistency, format compliance, and hallucination penalty.
-- Create chosen/rejected pairs.
-- Train or simulate a DPO-style preference step only after the data quality is checked.
-- Treat GRPO-style optimization as long-term exploration.
+### 任务 7：初版 README
 
-Files:
+**文件：**
+
+- 创建或修改：`README.md`
+
+步骤：
+
+- [ ] 写明项目定位：基于公开 notebook 和 Qwen2.5-VL LoRA 的二次实现。
+- [ ] 写明架构：图表/报表图片 -> VLM prompt -> base inference -> LoRA training -> evaluation -> demo。
+- [ ] 添加 AutoDL 快速开始命令。
+- [ ] 添加样例输入输出截图。
+- [ ] 添加当前限制。
+- [ ] 添加克制、真实的简历 bullet。
+- [ ] 提交：`docs: add initial project readme`。
+
+### 任务 8：成功与失败案例记录
+
+**文件：**
+
+- 创建：`reports/case_studies.md`
+
+步骤：
+
+- [ ] 记录 5 个成功的图表/报表问答案例。
+- [ ] 记录 5 个失败的图表/报表问答案例。
+- [ ] 每个失败案例标注一个主要原因：图表类型理解错误、坐标轴或图例读取错误、数值尺度错误、多步比较错误、答案格式错误、编造数值。
+- [ ] 对关键案例附截图或复制输出。
+- [ ] 提交：`docs: add qa case studies`。
+
+## 里程碑 3：LoRA 实验，第 3 天到第 7 天
+
+**交付物：** 一张可用于面试讲解的 LoRA 实验对比表。
+
+### 任务 9：受控 LoRA 对比实验
+
+**文件：**
+
+- 修改：`configs/qwen25vl_chartqa.yaml`
+- 修改：`scripts/train_lora.py`
+- 修改：`reports/experiments.md`
+
+实验网格：
+
+- 数据比例：`1%`、`3%`，可选 `5%`
+- LoRA rank：`8`、`16`
+- 学习率：`2e-5`，可选 `1e-4`
+- 训练轮数：`1`
+
+步骤：
+
+- [ ] 先运行 smoke 配置。
+- [ ] 至少运行两组正式 LoRA 配置。
+- [ ] 记录数据量、可训练参数量、显存、训练时间、eval loss、EM、token F1 和 numeric accuracy。
+- [ ] 将不同 adapter 保存到独立输出目录。
+- [ ] 在 `reports/experiments.md` 中整理对比表。
+- [ ] 提交：`exp: compare chartqa lora settings`。
+
+### 任务 10：Badcase 分析
+
+**文件：**
+
+- 创建：`reports/badcase_analysis.md`
+- 修改：`README.md`
+
+步骤：
+
+- [ ] 将失败案例分为：图表类型理解错误、坐标轴或图例读取错误、数值尺度错误、多步比较错误、答案格式错误、编造数值。
+- [ ] 每个已观察到的类别提供一个代表案例。
+- [ ] 为最主要的 2 类错误提出后续优化方案。
+- [ ] 在 README 中总结 badcase 分布。
+- [ ] 提交：`docs: add chartqa badcase analysis`。
+
+## 里程碑 4：场景扩展，第 7 天到第 14 天
+
+**交付物：** 让项目更像企业报表助手，而不是只停留在 benchmark notebook。
+
+### 任务 11：报表截图样例
+
+**文件：**
+
+- 创建：`data/samples/README.md`
+- 修改：`app.py`
+- 修改：`reports/case_studies.md`
+
+步骤：
+
+- [ ] 加入 5-10 张公开或自制的业务图表/报表截图，并写明许可来源。
+- [ ] 为每张样例编写自然语言问题。
+- [ ] 对这些样例分别运行 base 和 LoRA 推理。
+- [ ] 记录 ChartQA 微调在哪些场景有帮助，在哪些场景泛化不足。
+- [ ] 提交：`data: add report screenshot samples`。
+
+### 任务 12：可选 OCR/RAG 扩展
+
+**文件：**
+
+- 创建：`src/chartvqa/rag.py`
+- 创建：`reports/rag_extension.md`
+
+步骤：
+
+- [ ] 只有在 VLM 微调主线稳定后再做此扩展。
+- [ ] 对长报表 PDF 使用 OCR 或 PDF 文本抽取。
+- [ ] 检索相关报表文本片段作为辅助上下文。
+- [ ] 对少量样例比较 VLM-only 与 VLM + retrieved context 的效果。
+- [ ] 提交：`exp: explore report rag extension`。
+
+## 里程碑 5：偏好优化，第 3 周以后
+
+**交付物：** 先做 reward reranking 和 DPO 数据构造，不提前承诺 GRPO。
+
+范围：
+
+- 对同一个图表问题生成多个候选答案。
+- 使用答案匹配、数值一致性、格式合规性和幻觉惩罚打分。
+- 构造 chosen/rejected 偏好样本。
+- 只有在偏好数据质量确认后，再训练或模拟 DPO-style 优化。
+- GRPO-style 优化作为长期探索。
+
+文件：
 
 - `src/chartvqa/reranking.py`
 - `tests/test_reranking.py`
 - `data/preference/chartqa_preferences.jsonl`
 - `reports/reward_reranking.md`
 
-Resume-safe wording:
+简历安全表达：
 
-- "Designed rule-based reward functions for multi-candidate answer reranking, combining answer matching, numeric consistency, and format compliance to reduce unsupported chart answers."
+- “设计规则奖励函数，对多候选回答进行 reward reranking，结合答案匹配、数值一致性和格式合规性降低无依据图表回答。”
 
-Avoid wording:
+避免表达：
 
-- "Used GRPO to significantly improve model reasoning ability."
+- “使用 GRPO 显著提升模型推理能力。”
 
-## Execution Schedule
+## 执行时间表
 
-### 2-3 Day Resume-Ready Version After GPU Is Ready
+### GPU 准备后 2-3 天可展示版
 
-- Day 1 morning: AutoDL setup, repo clone, token configuration, CUDA/package check.
-- Day 1 afternoon: convert Kaggle notebook to scripts and run one-step smoke training.
-- Day 2 morning: run base-model evaluation and LoRA smoke adapter evaluation.
-- Day 2 afternoon: build Gradio demo and README screenshots.
-- Day 3: run at least one real LoRA configuration, write evaluation table and case studies.
+- 第 1 天上午：AutoDL 环境准备、仓库克隆、token 配置、CUDA 和依赖检查。
+- 第 1 天下午：将 Kaggle notebook 转为脚本，并跑通 one-step smoke training。
+- 第 2 天上午：运行 base model 评估和 LoRA smoke adapter 评估。
+- 第 2 天下午：构建 Gradio Demo 和 README 截图。
+- 第 3 天：至少运行一组正式 LoRA 配置，整理评估表和案例分析。
 
-### 7-14 Day Stronger Version
+### 7-14 天增强版
 
-- Days 4-5: LoRA rank/data-fraction comparison.
-- Days 6-7: badcase analysis and demo polish.
-- Days 8-10: report screenshot generalization samples.
-- Days 11-14: reward reranking prototype, architecture docs, interview notes, resume variants.
+- 第 4-5 天：对比 LoRA rank 和数据比例。
+- 第 6-7 天：整理 badcase 分析并打磨 Demo。
+- 第 8-10 天：加入报表截图泛化样例。
+- 第 11-14 天：实现 reward reranking 原型、补充架构文档、面试讲解稿和简历版本。
 
-## Definition of Done
+## 完成标准
 
-MVP is done when:
+MVP 完成标准：
 
-- AutoDL setup is documented and reproducible.
-- One-step Qwen2.5-VL ChartQA QLoRA training succeeds.
-- At least one real LoRA run completes.
-- Base vs LoRA evaluation exists in `reports/eval_results.csv`.
-- Gradio demo can answer questions for sample chart/report images.
-- `reports/case_studies.md` contains at least 5 successful and 5 failed cases.
-- README includes scenario, training route, evaluation results, screenshots, limitations, and restrained resume bullets.
+- AutoDL 环境配置文档可复现。
+- Qwen2.5-VL + ChartQA QLoRA one-step training 成功。
+- 至少一组正式 LoRA 训练完成。
+- `reports/eval_results.csv` 中有 base vs LoRA 评估结果。
+- Gradio Demo 可以回答样例图表/报表问题。
+- `reports/case_studies.md` 至少包含 5 个成功案例和 5 个失败案例。
+- README 包含项目场景、训练路线、评估结果、截图、限制和克制的简历 bullet。
 
-Strong version is done when:
+增强版完成标准：
 
-- At least 3 LoRA configurations have been compared.
-- Report screenshot transfer cases are included.
-- Badcase analysis explains numeric and chart-structure failures.
-- Reward reranking or preference-data construction is prototyped.
-- Interview notes cover the 3-minute, 8-minute, and 20-minute project explanations.
+- 至少比较 3 组 LoRA 配置。
+- 加入报表截图迁移案例。
+- Badcase 分析解释数值和图表结构类错误。
+- 完成 reward reranking 或偏好数据构造原型。
+- 面试笔记覆盖 3 分钟、8 分钟和 20 分钟项目讲解。
 
-## Self-Review
+## 自检
 
-- Spec coverage: the plan now covers the user's revised preference for a current-demand scenario, VLM fine-tuning, AutoDL cloud training, evaluation, badcase analysis, and later DPO/GRPO-style exploration.
-- Scope control: OCR/RAG is moved to an optional extension; first-stage work stays centered on Qwen2.5-VL + ChartQA LoRA.
-- Resume safety: wording explicitly says open-source reproduction plus secondary implementation and avoids exaggerated GRPO claims.
-- Risk coverage: the plan keeps the project centered on VLM adaptation, measurable evaluation, and practical scenario packaging rather than backend CRUD.
+- 覆盖范围：计划覆盖当前真实需求场景、VLM 微调、AutoDL 云端训练、评估、badcase 和后续 DPO/GRPO-style 探索。
+- 范围控制：OCR/RAG 已降级为可选扩展，第一阶段聚焦 Qwen2.5-VL + ChartQA LoRA。
+- 简历安全：明确采用公开 notebook 和公开数据集二次实现，不夸大 GRPO。
+- 风险控制：项目重点放在 VLM 适配、可量化评估和实际场景包装，不滑向纯后端。
