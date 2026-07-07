@@ -35,6 +35,9 @@ env/
 # Kaggle
 kaggle.json
 
+# Claude Code local config
+.claude/
+
 # Logs
 *.log
 
