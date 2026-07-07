@@ -1,0 +1,17 @@
+torch
+transformers
+datasets
+accelerate
+peft
+trl
+bitsandbytes
+qwen-vl-utils
+gradio
+pydantic
+pyyaml
+pillow
+pandas
+numpy
+pytest
+evaluate
+scikit-learn
