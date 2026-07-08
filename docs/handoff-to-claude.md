@@ -4,35 +4,31 @@
 
 ## 交付时间
 
-2026-07-08 13:55
+2026-07-08
 
 ## 本次任务
 
-请在远端 Gradio Demo 中手动验证推荐展示样例，确认页面实际输出与 `reports/demo_cases.md` 和评估 CSV 记录一致或大体一致。
+请在 Gradio 网页端上传推荐样例图片并保存截图，补齐最终展示材料。
 
 背景：
 
-- 你已基于 250 条 badcase 生成 `reports/demo_cases.md`。
-- 你已导出 8 张图片到 `reports/demo_cases/`。
-- 当前尚未进行 Gradio 页面手动验证。
-- Codex 已将 Demo 样例结果写入 `README.md`、`reports/experiments.md`、`project_state.md` 和 `实习面试资料.md`，但明确标注为“尚未手动验证”。
+- 你已通过 Python 脚本完成 Demo 后端等价验证。
+- 4/5 样本与预期一致：235、24、142、9。
+- 样本 73 出现生成波动：Base 本次也答对，因此不建议作为主展示样例。
+- 当前还缺真正网页端上传图片的截图验证。
 
-## 请优先验证的样本
+## 推荐截图样例
 
-请至少验证 3 个样本：
+请优先截图以下 4 个稳定样本：
 
-| 样本 | 类型 | 期望观察 |
+| 样本 | 类型 | 展示目的 |
 |------|------|----------|
-| 235 | 数值改进 | Base 倾向算错，LoRA 应输出或接近 `3.2` |
-| 24 | 格式改进 | LoRA 应比 Base 更接近 `Yes.` |
-| 142 | 退化边界 | Base 应比 LoRA 更简洁、更接近 `No.` |
+| 235 | 数值改进 | 展示 LoRA 修正 Base 加法错误 |
+| 24 | 格式改进 | 展示 LoRA 更符合短答案格式 |
+| 142 | 退化边界 | 展示 LoRA 并非总是更好 |
+| 9 | 共同失败 | 展示当前数值/百分比短板 |
 
-如果时间允许，再验证：
-
-| 样本 | 类型 | 期望观察 |
-|------|------|----------|
-| 73 | 数值改进 | LoRA 应输出或接近 `21.5` |
-| 9 | 共同失败 | Base 和 LoRA 都可能答 `3`，标准答案是 `0.03` |
+样本 73 可不截图，或作为候选补充截图，但请标记为“有波动”。
 
 ## 建议操作
 
@@ -42,7 +38,7 @@
 cvl
 ```
 
-如果 Demo 没有运行，请启动：
+如 Demo 未运行，启动：
 
 ```bash
 python app.py \
@@ -52,28 +48,47 @@ python app.py \
   --server-port 6006
 ```
 
-然后在 Gradio 页面中上传对应图片，例如：
+在网页端上传对应图片：
 
 ```text
 reports/demo_cases/sample_235.png
 reports/demo_cases/sample_24.png
 reports/demo_cases/sample_142.png
+reports/demo_cases/sample_9.png
 ```
 
-分别用 Base 和 LoRA 模式提问，记录页面输出。
+分别切换 Base 和 LoRA 模式，记录页面输出并保存截图。
+
+## 产物建议
+
+请将截图保存到：
+
+```text
+reports/demo_screenshots/
+```
+
+建议命名：
+
+```text
+sample_235_base.png
+sample_235_lora.png
+sample_24_base.png
+sample_24_lora.png
+sample_142_base.png
+sample_142_lora.png
+sample_9_base.png
+sample_9_lora.png
+```
 
 ## 请交回 Codex
 
-- 手动验证了哪些样本 index。
-- 每个样本的 Base 页面输出。
-- 每个样本的 LoRA 页面输出。
-- 是否与 `reports/demo_cases.md` 中记录一致或大体一致。
-- 如果输出不同，请说明差异。
-- Demo 页面是否仍可正常访问。
-- 如方便，请保存截图路径或说明无法截图。
+- 是否成功在网页端上传图片并推理。
+- 每个样本的 Base 页面输出和 LoRA 页面输出。
+- 截图是否保存，保存路径是什么。
+- 是否有样本输出和后端等价验证不同。
+- 如果网页端操作不方便，请说明原因。
 
 ## 判断标准
 
-- 只要输出与 CSV 记录大体一致，就可以将这些样例作为正式展示样例。
-- 如果生成结果有随机波动，需要记录波动，并优先选择更稳定的样例。
-- 如果某个推荐样例在页面上不稳定，就从 `reports/demo_cases.md` 里的其他样本替换。
+- 只要网页端输出与后端等价验证大体一致，就可以作为最终展示材料。
+- 如果某个样例网页端输出不稳定，就不要放进主展示顺序。

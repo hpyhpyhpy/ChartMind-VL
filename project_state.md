@@ -139,23 +139,35 @@
 - 远端生成 `reports/demo_cases.md`，包含 8 个样例的图片路径、问题、标准答案、Base 回答、LoRA 回答和展示话术。
 - 远端导出 8 张样本图片到 `reports/demo_cases/`：
   - 样本 24、73、205、235、244、142、9、13
-- 推荐 Demo 展示顺序：
+- 原推荐 Demo 展示顺序：
   - 样本 235：数值改进，Base 加法算错，LoRA 输出 `3.2`
   - 样本 24：格式改进，LoRA 输出 `Yes.`
   - 样本 73：数值改进，LoRA 输出 `21.5%`
   - 样本 142：退化边界，Base 的 `No.` 更精确
   - 样本 9：共同失败，百分比差值问题两者都答错
-- 当前尚未进行 Gradio 页面手动验证，下一步需要验证样例在 Demo 中的实际输出是否与 CSV 记录一致或大体一致。
+- 当前尚未进行 Gradio 网页端上传截图验证，下一步需要验证样例在页面中的实际输出是否与 CSV 记录一致或大体一致。
+
+### Demo 后端等价验证
+
+- Claude Code 已通过 Python 脚本直接调用推理引擎，等价验证 Gradio Demo 后端逻辑。
+- Demo 端口 6006 HTTP 200，可访问；GPU 空载约 1 MiB。
+- 5 个样本复验结果：
+  - 样本 235：Base 输出 `1.6 + 1.8 = 3.4`，LoRA 输出 `3.2`，与预期一致。
+  - 样本 24：Base 输出冗长 Yes 回答，LoRA 输出 `Yes.`，与预期一致。
+  - 样本 142：Base 输出 `No.`，LoRA 输出较长解释，退化边界与预期一致。
+  - 样本 73：Base 和 LoRA 本次都答对 `21.5%`，存在生成波动，不建议作为主展示样例。
+  - 样本 9：Base 和 LoRA 都输出 `3`，共同失败与预期一致。
+- 当前推荐正式展示顺序调整为：235、24、142、9；样本 73 作为候选补充。
 
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：第一阶段最小闭环已完成，250 条评估、badcase 分析和 Demo 样例整理已完成；Demo 样例仍待页面手动验证。
+- 当前阶段：第一阶段最小闭环已完成，250 条评估、badcase 分析、Demo 样例整理和后端等价验证已完成；网页端截图验证仍待完成。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：在远端 Gradio 页面手动验证推荐 Demo 样例，并整理可用于面试展示的最终话术；之后再考虑增加训练数据比例、调整 `max_seq_length` 或围绕数值错误做专项优化。
+- 下一步：在远端 Gradio 网页端上传推荐样例并保存截图，整理可用于面试展示的最终材料；之后再考虑增加训练数据比例、调整 `max_seq_length` 或围绕数值错误做专项优化。
