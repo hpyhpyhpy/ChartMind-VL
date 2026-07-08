@@ -27,6 +27,18 @@ def test_describe_error_type_prioritizes_numeric_errors() -> None:
     assert describe_error_type(row) == "数值错误"
 
 
+def test_describe_error_type_marks_correct_predictions() -> None:
+    row = {
+        "answer": "Yes",
+        "prediction": "Yes.",
+        "exact_match": 1.0,
+        "token_f1": 1.0,
+        "numeric_accuracy": 1.0,
+    }
+
+    assert describe_error_type(row) == "回答正确"
+
+
 def test_analyze_badcases_groups_base_and_lora_rows_by_index() -> None:
     rows = [
         {

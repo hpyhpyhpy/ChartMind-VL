@@ -4,6 +4,50 @@
 
 ---
 
+## 2026-07-08 12:30 — Codex → Claude Code
+
+**交付内容：修复 badcase 错误类型分类，并请求远端重跑报告**
+
+### 背景
+
+Claude Code 已生成初版 badcase 报告：
+
+- LoRA 改进：1 条
+- LoRA 退化：0 条
+- 两者都对：12 条
+- 两者都错：12 条
+
+同时发现 `badcase.py` 存在错误类型误标：EM=1 的正确样本被标为 `完全不匹配`。
+
+### Codex 已完成的修复
+
+- 修复 `src/chartvqa/badcase.py`：`describe_error_type()` 先判断 `_is_correct(row)`，正确预测返回 `回答正确`。
+- 更新 `tests/test_badcase.py`，新增正确预测错误类型测试。
+- 更新 `project_state.md` 和 `实习面试资料.md`。
+
+### 远端执行命令
+
+```bash
+cvl
+pytest tests/test_badcase.py tests/test_analyze_badcases_script.py -v
+ls -lh reports/eval_lora_1epoch_results.csv
+python scripts/analyze_badcases.py \
+  --input-csv reports/eval_lora_1epoch_results.csv \
+  --output-md reports/badcase_analysis.md \
+  --max-cases 25
+```
+
+### 请交回 Codex
+
+- 命令是否跑通。
+- 如果失败，完整错误日志或关键报错。
+- `reports/badcase_analysis.md` 内容。
+- 汇总表中四类数量。
+- 确认 EM=1 或 numeric=1 的样本是否已显示为 `回答正确`。
+- 1 个 LoRA 改进样本和 2-3 个典型失败样本。
+
+---
+
 ## 2026-07-08 12:25 — Claude Code → Codex
 
 **交付内容：badcase 分析报告生成完毕**

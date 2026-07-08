@@ -41,6 +41,9 @@ def _has_number(text: str) -> bool:
 
 
 def describe_error_type(row: Mapping[str, Any]) -> str:
+    if _is_correct(row):
+        return "回答正确"
+
     answer = str(row.get("answer", ""))
     prediction = str(row.get("prediction", ""))
     exact = _to_float(row.get("exact_match", 0.0))

@@ -87,16 +87,19 @@
 - 新增 `src/chartvqa/badcase.py`，按样本 index 对齐 base 与 LoRA 预测，分类 `lora_improved`、`lora_regressed`、`both_correct`、`both_wrong`，并标注错误类型。
 - 新增 `scripts/analyze_badcases.py`，读取 `reports/eval_lora_1epoch_results.csv` 并生成 `reports/badcase_analysis.md`。
 - 新增 `tests/test_badcase.py` 和 `tests/test_analyze_badcases_script.py`，覆盖 badcase 分类和报告渲染。
+- Claude Code 已在远端生成初版 badcase 报告：LoRA 改进 1 条、LoRA 退化 0 条、两者都对 12 条、两者都错 12 条。
+- 修复 `src/chartvqa/badcase.py` 中的错误类型标注问题：EM=1 或 numeric=1 的正确预测现在标记为 `回答正确`，不再误标为 `完全不匹配`。
+- 新增测试覆盖正确预测的错误类型标注。
 
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：1 epoch LoRA 训练和 25 条样本评估已完成，LoRA 指标开始超过 Base；badcase 分析入口已完成，等待同步远端 CSV 后生成 badcase 报告。
+- 当前阶段：1 epoch LoRA 训练和 25 条样本评估已完成，LoRA 指标开始超过 Base；badcase 分析报告初版已生成，Codex 已修复错误类型标注逻辑，等待远端重跑报告。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：基于 `reports/eval_lora_1epoch_results.csv` 生成 badcase 报告；随后可扩大评估 split 至 `test[:4%]` 或启动 Gradio Demo。
+- 下一步：让 Claude Code 用修复后的 badcase 逻辑重新生成 `reports/badcase_analysis.md`；随后基于 LoRA 改进样本和典型失败样本启动 Gradio Demo。

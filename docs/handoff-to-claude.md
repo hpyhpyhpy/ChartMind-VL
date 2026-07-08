@@ -4,29 +4,25 @@
 
 ## 交付时间
 
-2026-07-08 12:04
+2026-07-08 12:30
 
 ## 本次任务
 
-请在远端 AutoDL RTX 4090D 环境基于最新评估 CSV 生成 **badcase 分析报告**。
+请在远端 AutoDL RTX 4090D 环境使用修复后的 badcase 逻辑，重新生成 **badcase 分析报告**。
 
 背景：
 
 - 1 epoch LoRA 训练已跑通，耗时 3 分 02 秒。
 - LoRA 在 25 条 test 样本上三项指标均超过 Base。
 - 评估结果已在远端 `reports/eval_lora_1epoch_results.csv`。
-- Codex 已新增 badcase 分析脚本，需要 Claude Code 在远端用真实 CSV 生成报告。
+- 初版 badcase 报告已生成：LoRA 改进 1 条、LoRA 退化 0 条、两者都对 12 条、两者都错 12 条。
+- Claude Code 发现错误类型分类有误：EM=1 的正确样本被标成 `完全不匹配`。
+- Codex 已修复 `src/chartvqa/badcase.py`，正确预测现在标记为 `回答正确`。
 
 ## Codex 已完成的本地改动
 
-- 新增 `reports/experiments.md`，记录 smoke training 与 1 epoch LoRA 实验结果。
-- 新增 `src/chartvqa/badcase.py`，按样本 index 对齐 base / LoRA 预测并分类：
-  - `lora_improved`
-  - `lora_regressed`
-  - `both_correct`
-  - `both_wrong`
-- 新增 `scripts/analyze_badcases.py`，读取评估 CSV 并生成 Markdown 报告。
-- 新增测试：`tests/test_badcase.py`、`tests/test_analyze_badcases_script.py`。
+- 修复 `src/chartvqa/badcase.py`：`describe_error_type()` 先判断 `_is_correct(row)`，正确预测返回 `回答正确`。
+- 更新 `tests/test_badcase.py`，新增正确预测错误类型测试。
 - 更新 `project_state.md` 和 `实习面试资料.md`。
 
 ## 远端执行前提
@@ -42,8 +38,8 @@
 
 注意：
 
-- 本次只生成 badcase 报告，不需要重新训练。
-- 如果远端还没有同步最新代码，请先同步 Codex 本次新增的 `src/chartvqa/badcase.py` 和 `scripts/analyze_badcases.py`。
+- 本次只重新生成 badcase 报告，不需要重新训练。
+- 如果远端还没有同步最新代码，请先同步 Codex 修复后的 `src/chartvqa/badcase.py` 和 `tests/test_badcase.py`。
 
 ## 请执行的命令
 
@@ -65,7 +61,7 @@ pytest tests/test_badcase.py tests/test_analyze_badcases_script.py -v
 ls -lh reports/eval_lora_1epoch_results.csv
 ```
 
-生成 badcase 报告：
+重新生成 badcase 报告：
 
 ```bash
 python scripts/analyze_badcases.py \
@@ -86,7 +82,8 @@ python scripts/analyze_badcases.py \
 - 如果失败，完整错误日志或关键报错。
 - `reports/badcase_analysis.md` 内容。
 - badcase 汇总表中 `LoRA 改进`、`LoRA 退化`、`两者都对`、`两者都错` 的数量。
-- 挑出 2-3 个适合后续 Demo 展示的 `LoRA 改进` 样本。
+- 确认 EM=1 或 numeric=1 的样本是否已显示为 `回答正确`。
+- 挑出 1 个 LoRA 改进样本和 2-3 个典型失败样本，供后续 Demo 或 README 使用。
 
 ## 可能风险
 
