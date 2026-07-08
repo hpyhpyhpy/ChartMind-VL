@@ -8,64 +8,91 @@
 
 ## 本次任务
 
-扩大 base vs LoRA 评估样本量（100 条和 250 条） ✅ 完成
+基于 250 条评估 CSV 生成 badcase 报告 ✅ 完成
 
 ## 执行结果
 
-### 100 条评估
+| 检查项 | 状态 |
+|--------|------|
+| CSV 存在 (87K, 500 行) | ✅ |
+| badcase 报告生成 | ✅ reports/badcase_analysis_250.md (431 行, 40 个样本) |
 
-```json
-{
-  "base": { "count": 100, "exact_match": 0.22, "token_f1": 0.299, "numeric_accuracy": 0.50 },
-  "lora": { "count": 100, "exact_match": 0.21, "token_f1": 0.295, "numeric_accuracy": 0.50 }
-}
-```
-耗时：359s（~6 min）
+## 汇总表
 
-### 250 条评估
+| 类型 | 数量 | 占比 |
+|------|------|------|
+| 🟢 LoRA 改进 | **6** | 2.4% |
+| 🔴 LoRA 退化 | **1** | 0.4% |
+| ⚪ 两者都对 | 113 | 45.2% |
+| ⚫ 两者都错 | 130 | 52.0% |
 
-```json
-{
-  "base": { "count": 250, "exact_match": 0.208, "token_f1": 0.296, "numeric_accuracy": 0.456 },
-  "lora": { "count": 250, "exact_match": 0.224, "token_f1": 0.315, "numeric_accuracy": 0.476 }
-}
-```
-耗时：676s（~11 min）
+## LoRA 改进样本（至少 3 个）
 
-### 汇总对比
-
-| 指标 | 25 条 (前次) | 100 条 | 250 条 |
-|------|:-----------:|:------:|:------:|
-| EM Δ | +0.04 | -0.01 | **+0.016** |
-| F1 Δ | +0.05 | -0.004 | **+0.019** |
-| NUM Δ | +0.04 | 0 | **+0.020** |
-
-### 结论
-
-- **250 条评估是最可信的结果**：LoRA 三项指标均稳定超过 Base
-- 25 条到 100 条的波动是样本量不足导致的噪声
-- 250 条后趋势稳定：LoRA 带来了微弱但有方向性的提升（+1.6%~2.0%）
-- 考虑到仅 1% 数据 + 1 epoch 训练，这个结果合理且积极
-
-### 产物
-
-| 文件 | 说明 |
+### 样本 24 — 回答格式改进
+| 字段 | 内容 |
 |------|------|
-| `reports/eval_lora_1epoch_100_results.csv` | 100 条逐样本 |
-| `reports/eval_lora_1epoch_100_summary.json` | 100 条汇总 |
-| `reports/eval_lora_1epoch_250_results.csv` | 250 条逐样本 |
-| `reports/eval_lora_1epoch_250_summary.json` | 250 条汇总 |
+| 问题 | Is the percentage value of "STEM" segment 52? |
+| 标准答案 | Yes |
+| Base | Yes, the percentage value of the "STEM" segment is 52%. |
+| LoRA | **Yes.** |
+| 分析 | Base 冗长(部分匹配), LoRA 简洁(回答正确 ✅) |
 
-### 注意事项
+### 样本 73 — 数值改进
+| 字段 | 内容 |
+|------|------|
+| 问题 | What is the average of the smallest gray bar and largest light blue bar? |
+| 标准答案 | 21.5 |
+| Base | 计算过程不完整，未给出最终数值 (数值错误 ❌) |
+| LoRA | **21.5%** (回答正确 ✅) |
 
-- 远端 `test_split` 已从 `test[:10%]` 恢复为 `test[:1%]`
-- 远端 `model.id` 仍为本地缓存路径
-- 评估总耗时约 17 分钟（100 条 6 分钟 + 250 条 11 分钟）
-- 推理前 GPU 显存 1 MiB，推理时峰值约 40-80%（24GB 总量），评估结束释放至 4 MiB
-- Base 和 LoRA 各完成 250 条推理，无异常中断
+### 样本 205 — 回答格式改进
+| 字段 | 内容 |
+|------|------|
+| 问题 | Is the median value of all the bars greater than 30? |
+| 标准答案 | Yes |
+| Base | Yes, the median value of all the bars is greater than 30. |
+| LoRA | **Yes.** |
+| 分析 | 同样 Base 冗长→LoRA 简洁 ✅ |
 
-### 远端环境
+### 样本 235 — 数值改进
+| 字段 | 内容 |
+|------|------|
+| 问题 | Find the two smallest values in the given chart and add them? |
+| 标准答案 | 3.2 |
+| Base | 1.6 + 1.8 = **3.4** (数值错误 ❌) |
+| LoRA | **3.2** (回答正确 ✅) |
 
-- 代码已同步（commit `ebbac1e`）
-- 评估产物：`reports/eval_lora_1epoch_{100,250}_results.csv` + `_summary.json`
-- GPU 显存：空载 4 MiB
+### 样本 244 — 问答能力改进
+| 字段 | 内容 |
+|------|------|
+| 问题 | How many colors are used in the Graph? |
+| 标准答案 | 1 |
+| Base | The graph uses one color, which is a shade of blue... (完全不匹配 ❌) |
+| LoRA | **1 color is used in the graph.** (回答正确 ✅) |
+
+## LoRA 退化样本
+
+只有 1 条 **(样本 142)**：
+
+| 字段 | 内容 |
+|------|------|
+| 问题 | Is the median of green graph from 2002 to 2006 greater than smallest value of orange graph? |
+| 标准答案 | No |
+| Base | **No.** (回答正确 ✅) |
+| LoRA | No. The median of the green graph...is approximately 31%, which is not greater... (部分匹配 ❌) |
+
+分析：Base 已完美回答"Answer"，LoRA 变啰嗦，从精确匹配退化为部分匹配。
+
+## 主要错误类型观察
+
+1. **数值错误占主导**："两者都错" 130 条中大部分是数值错误（占约 60-70%）— Base 和 LoRA 在图表数值理解上的不足高度一致
+2. **回答格式改进是 LoRA 主要收益**：6 个改进样本中 4 个是基座输出了完整句子而 LoRA 学会了简洁风格
+3. **LoRA 也修正了少量数值错误**：样本 73 和 235 显示 LoRA 不仅在格式上改进，在特定数值计算上也比 Base 更准
+4. **退化极少**：仅 1 条退化（0.4%），且退化原因是 Base 已完美而 LoRA 变得啰嗦，并非答错
+
+总体：1% 数据训练的 LoRA 在回答风格和少量数值上产生了积极但微弱的变化。
+
+## 远端环境
+
+- 代码已同步（commit `b065af4`）
+- 产物：`reports/badcase_analysis_250.md`

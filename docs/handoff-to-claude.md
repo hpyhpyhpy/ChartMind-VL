@@ -4,51 +4,77 @@
 
 ## 交付时间
 
-2026-07-08 13:12
+2026-07-08 13:41
 
 ## 本次任务
 
-请在远端 AutoDL RTX 4090D 环境复用已训练好的 1 epoch LoRA adapter，扩大评估样本量，验证 LoRA 相对 Base 的提升是否更稳定。
+请在远端 AutoDL RTX 4090D 环境基于 250 条评估结果生成更完整的 badcase 报告，并回传关键统计和代表样本。
 
-## ✅ 执行结果
+背景：
 
-### 100 条评估
+- 1 epoch LoRA 已完成。
+- 100 条评估有小幅波动，250 条评估中 LoRA 三项指标均超过 Base：
+  - Exact Match：0.208 -> 0.224
+  - Token F1：0.296 -> 0.315
+  - Numeric Accuracy：0.456 -> 0.476
+- 现在需要解释 250 条结果中 LoRA 到底在哪些样本上改进、在哪些样本上退化。
 
-| 指标 | Base | LoRA | Δ |
-|------|------|------|----|
-| Exact Match | 0.22 | 0.21 | -0.01 |
-| Token F1 | 0.299 | 0.295 | -0.004 |
-| Numeric Accuracy | 0.50 | 0.50 | 0 |
+## Codex 已完成的本地改动
 
-耗时：359s（~6 min）
+- 更新 `README.md`，将当前主要结果从 25 条评估升级为 250 条评估口径。
+- 更新 `reports/experiments.md`，新增“实验 3：扩大评估样本量”。
+- 更新 `project_state.md`，记录 100 条和 250 条评估结果。
+- 更新 `实习面试资料.md`，新增“阶段 8：扩大评估样本量”的复盘和面试问答。
 
-### 250 条评估
+## 远端执行前提
 
-| 指标 | Base | LoRA | Δ |
-|------|------|------|----|
-| Exact Match | 0.208 | **0.224** | **+0.016** |
-| Token F1 | 0.296 | **0.315** | **+0.019** |
-| Numeric Accuracy | 0.456 | **0.476** | **+0.020** |
+远端已有产物：
 
-耗时：676s（~11 min）
+- `reports/eval_lora_1epoch_250_results.csv`
+- `reports/eval_lora_1epoch_250_summary.json`
+- `outputs/qwen25vl-chartqa-lora-1epoch/`
 
-### 结论
+注意：
 
-100 条时 LoRA 略微落后（波动），**250 条时 LoRA 在三项指标上全面反超**。说明：
+- 本次不需要重新训练。
+- 本次不需要重新跑评估，除非 250 条 CSV 文件缺失。
+- 只需要读取已有 CSV 并生成 badcase 报告。
 
-- 1 epoch 1% 数据训练确实产生了微弱但方向稳定的学习信号
-- 25 条和 100 条的波动是由样本量不足引起的
-- 250 条的结果是最可信的：LoRA 三项指标均高于 Base
+## 请执行的命令
 
-### 产物
+进入项目环境：
 
-- `reports/eval_lora_1epoch_100_results.csv` — 100 条逐样本结果
-- `reports/eval_lora_1epoch_100_summary.json` — 100 条汇总
-- `reports/eval_lora_1epoch_250_results.csv` — 250 条逐样本结果
-- `reports/eval_lora_1epoch_250_summary.json` — 250 条汇总
+```bash
+cvl
+```
 
-### 注意事项
+生成 250 条 badcase 报告：
 
-- 远端 `test_split` 已从 `test[:10%]` 恢复为 `test[:1%]`
-- 远端 `model.id` 仍为本地缓存路径
-- 评估总耗时约 17 分钟，GPU 使用正常，显存已释放至 4 MiB
+```bash
+python scripts/analyze_badcases.py \
+  --input-csv reports/eval_lora_1epoch_250_results.csv \
+  --output-md reports/badcase_analysis_250.md \
+  --max-cases 40
+```
+
+查看报告开头：
+
+```bash
+sed -n '1,220p' reports/badcase_analysis_250.md
+```
+
+## 请交回 Codex
+
+- 命令是否跑通。
+- 如果失败，完整错误日志或关键报错。
+- `reports/badcase_analysis_250.md` 的汇总表。
+- LoRA 改进、LoRA 退化、两者都对、两者都错的数量。
+- 至少 3 个 LoRA 改进样本，包含问题、标准答案、Base 回答、LoRA 回答。
+- 至少 3 个 LoRA 退化样本，如果没有退化样本请说明。
+- 你观察到的主要错误类型，例如数值错误、部分匹配、答案格式不一致等。
+
+## 判断标准
+
+- 如果 LoRA 改进样本主要是答案格式更短、更贴近标准答案，说明当前训练更多学到了 ChartQA 答案风格。
+- 如果 LoRA 对数值类问题也有明显改进，说明 adapter 不只是改了输出格式，还可能改善了图表问答能力。
+- 如果退化样本不少，下一步需要谨慎扩大训练，优先看退化集中在哪些题型。

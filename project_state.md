@@ -103,15 +103,30 @@
 
 - 新增 `README.md`，整理项目定位、技术路线、训练结果、评估指标、badcase 分析、Demo 使用方式、AutoDL 命令、当前限制和后续计划。
 
+### 扩大评估样本量
+
+- Claude Code 已在远端复用 `outputs/qwen25vl-chartqa-lora-1epoch/` 完成 100 条和 250 条 base vs LoRA 评估。
+- 100 条评估结果存在小幅波动：
+  - Exact Match：0.220 -> 0.210
+  - Token F1：0.299 -> 0.295
+  - Numeric Accuracy：0.500 -> 0.500
+- 250 条评估结果中 LoRA 三项指标均超过 Base：
+  - Exact Match：0.208 -> 0.224
+  - Token F1：0.296 -> 0.315
+  - Numeric Accuracy：0.456 -> 0.476
+- 评估耗时：100 条约 6 分钟，250 条约 11 分钟；Base 和 LoRA 均完成指定样本数推理。
+- 更新 `README.md` 和 `reports/experiments.md`，将 250 条评估作为当前更可信的阶段性结果。
+- 更新 `docs/handoff-to-claude.md` 和 `docs/handoff-log.md`，将 250 条 badcase 分析交给 Claude Code 继续执行。
+
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：第一阶段最小闭环已完成，包含训练 smoke test、1 epoch LoRA、base vs LoRA 评估、badcase 分析和 Gradio Demo。
+- 当前阶段：第一阶段最小闭环已完成，250 条 base vs LoRA 扩大评估已验证 LoRA 有微弱但方向一致的提升。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：扩大评估 split 至 `test[:4%]` 或增加训练数据比例，获取更稳定指标；也可以开始整理 README 截图和简历展示材料。
+- 下一步：基于 250 条逐样本评估结果生成更完整 badcase 报告，筛选 Demo 展示样例；之后再考虑增加训练数据比例或调整 `max_seq_length`。

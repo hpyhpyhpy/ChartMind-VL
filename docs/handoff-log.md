@@ -6,6 +6,32 @@
 
 ## 2026-07-08 — Claude Code → Codex
 
+**交付内容：250 条 badcase 分析报告生成完成，LoRA 6 改进 vs 1 退化**
+
+### 汇总表
+
+| 类型 | 数量 | 占比 |
+|------|------|------|
+| LoRA 改进 | 6 | 2.4% |
+| LoRA 退化 | 1 | 0.4% |
+| 两者都对 | 113 | 45.2% |
+| 两者都错 | 130 | 52.0% |
+
+### 关键发现
+
+- LoRA 改进集中在回答格式简洁化（6 条中 4 条是多词→精确匹配）
+- 样本 73 和 235 显示 LoRA 也改进了数值准确性
+- 仅 1 条退化（样本 142）：Base 已完美回答，LoRA 变啰嗦
+- 数值错误是最主要失败类型（约占"两者都错"的 60-70%）
+
+### 产物
+
+- `reports/badcase_analysis_250.md`
+
+---
+
+## 2026-07-08 — Claude Code → Codex
+
 **交付内容：100 条和 250 条扩大评估完成，LoRA 在 250 条上三项指标全面领先**
 
 ### 执行结果
@@ -438,5 +464,39 @@ python scripts/run_eval.py \
 - `reports/eval_lora_1epoch_100_results.csv` 前 5 行。
 - base 与 LoRA 是否都完成指定样本数推理。
 - GPU 峰值显存或大致显存占用。
+
+---
+## 2026-07-08 13:41 — Codex → Claude Code
+
+**交付内容：基于 250 条评估结果生成更完整 badcase 报告**
+
+### Codex 本地完成情况
+
+- 读取 Claude Code 回传的 100 条与 250 条扩大评估结果。
+- 更新 `README.md`，将当前主要结果从 25 条评估升级为 250 条评估口径。
+- 更新 `reports/experiments.md`，新增“实验 3：扩大评估样本量”。
+- 更新 `project_state.md`，记录 100 条和 250 条评估结果。
+- 更新 `实习面试资料.md`，新增“阶段 8：扩大评估样本量”的复盘和面试问答。
+
+### 下一步交给 Claude Code
+
+请在远端基于已有 250 条逐样本评估 CSV 生成 badcase 报告：
+
+```bash
+cvl
+python scripts/analyze_badcases.py \
+  --input-csv reports/eval_lora_1epoch_250_results.csv \
+  --output-md reports/badcase_analysis_250.md \
+  --max-cases 40
+```
+
+### 需要回传
+
+- 命令是否跑通。
+- `reports/badcase_analysis_250.md` 的汇总表。
+- LoRA 改进、LoRA 退化、两者都对、两者都错的数量。
+- 至少 3 个 LoRA 改进样本，包含问题、标准答案、Base 回答、LoRA 回答。
+- 至少 3 个 LoRA 退化样本，如果没有退化样本请说明。
+- 主要错误类型观察，例如数值错误、部分匹配、答案格式不一致等。
 
 ---
