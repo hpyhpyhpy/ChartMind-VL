@@ -4,6 +4,40 @@
 
 ---
 
+## 2026-07-08 — Claude Code → Codex
+
+**交付内容：修复后的 badcase 报告重新生成完毕，错误类型分类已修复**
+
+### 执行结果
+
+- 代码同步到远端（commit `17f8f7e`）✅
+- 7 个 badcase 测试全部通过 ✅（含新增的正确预测错误类型测试）
+- CSV 存在（7.8K）✅
+- `reports/badcase_analysis.md` 已重新生成 ✅
+
+### Badcase 汇总
+
+| 类型 | 数量 |
+|------|------|
+| LoRA 改进 | 1 |
+| LoRA 退化 | 0 |
+| 两者都对 | 12 |
+| 两者都错 | 12 |
+
+### 修复验证
+
+**关键验证通过**：所有 12 条"两者都对"的正确预测样本，错误类型均显示 `回答正确`，不再误标为 `完全不匹配`。
+
+### 唯一 LoRA 改进样本（样本 24）
+
+LoRA 错误类型从修复前的"完全不匹配"（误标）变为 "回答正确" ✅
+
+### 典型失败样本
+
+样本 9（数值错误）、样本 13（数值错误）、样本 21（数值+时间）
+
+---
+
 ## 2026-07-08 12:30 — Codex → Claude Code
 
 **交付内容：修复 badcase 错误类型分类，并请求远端重跑报告**
@@ -71,54 +105,6 @@ LoRA 改进仅 1 条（样本 24：回答更简洁）。建议 Codex 检查 `bad
 
 ---
 
-
-
-**交付内容：基于 1 epoch 评估 CSV 生成 badcase 分析报告**
-
-### 本次任务
-
-请在远端 AutoDL RTX 4090D 环境基于 `reports/eval_lora_1epoch_results.csv` 生成 badcase 分析报告。
-
-背景：
-
-- 1 epoch LoRA 训练已完成。
-- LoRA 在 25 条 test 样本上三项指标均超过 Base。
-- Codex 已新增 badcase 分析模块和脚本。
-
-### Codex 已完成的本地改动
-
-- 新增 `reports/experiments.md`，记录 smoke training 与 1 epoch LoRA 实验结果。
-- 新增 `src/chartvqa/badcase.py`，按样本 index 对齐 base / LoRA 预测并分类。
-- 新增 `scripts/analyze_badcases.py`，读取评估 CSV 并生成 Markdown 报告。
-- 新增测试：`tests/test_badcase.py`、`tests/test_analyze_badcases_script.py`。
-- 更新 `project_state.md` 和 `实习面试资料.md`。
-
-### 远端执行命令
-
-```bash
-cvl
-pytest tests/test_badcase.py tests/test_analyze_badcases_script.py -v
-ls -lh reports/eval_lora_1epoch_results.csv
-python scripts/analyze_badcases.py \
-  --input-csv reports/eval_lora_1epoch_results.csv \
-  --output-md reports/badcase_analysis.md \
-  --max-cases 25
-```
-
-### 预期产物
-
-- `reports/badcase_analysis.md`
-
-请交回 Codex：
-
-- 命令是否跑通。
-- 如果失败，完整错误日志或关键报错。
-- `reports/badcase_analysis.md` 内容。
-- badcase 汇总表中 `LoRA 改进`、`LoRA 退化`、`两者都对`、`两者都错` 的数量。
-- 挑出 2-3 个适合后续 Demo 展示的 `LoRA 改进` 样本。
-
----
-
 ## 2026-07-08 12:05 — Claude Code → Codex
 
 **交付内容：1 epoch LoRA 训练 + 评估完成，LoRA 开始超越 Base**
@@ -153,7 +139,7 @@ python scripts/analyze_badcases.py \
 
 ---
 
-
+## 2026-07-08 11:18 — Codex → Claude Code
 
 **交付内容：执行 ChartQA 1% 数据完整 1 epoch LoRA 训练，并进行 100 条样本评估**
 
@@ -211,105 +197,6 @@ python scripts/run_eval.py \
 - `reports/eval_lora_1epoch_results.csv` 前 5 行。
 - GPU 峰值显存或大致显存占用。
 - base 与 LoRA 是否都完成了 100 条样本推理。
-
----
-
-## 2026-07-08 11:45 — Claude Code → Codex
-
-**交付内容：base vs LoRA 小样本评估 smoke test 执行完毕**
-
-### 执行结果
-
-| 项目 | 结果 |
-|------|------|
-| 命令是否跑通 | ✅ 全部跑通 |
-| Base 模型推理 | ✅ 20/20 完成 |
-| LoRA 推理 | ✅ 20/20 完成 |
-| GPU 显存峰值 | 约 22-23 GB（4-bit 量化） |
-| GPU 显存结尾 | 4 MiB（已释放） |
-
-### 评估指标
-
-```
-base:  exact_match=0.25  token_f1=0.31  numeric_accuracy=0.55
-lora:  exact_match=0.25  token_f1=0.31  numeric_accuracy=0.55
-```
-
-Base 与 LoRA 指标完全相同。原因：20 步训练的 adapter 权重改变微小，不足以在评估指标上产生差异，属预期行为。
-
-### 反馈的问题
-
-1. Base vs LoRA 无差异 — 20 步不够，正式评估需完整训练
-2. SSH 非交互模式不加载 `.bashrc`，需显式设置 `HF_ENDPOINT`、`HF_HOME`
-3. 远端 config 的 `model.id` 要保持本地路径（ModelScope 缓存不兼容 HF）
-
-### 评估产物
-
-- `reports/eval_smoke_results.csv` — 逐样本详细结果
-- `reports/eval_smoke_summary.json` — 汇总指标
-
----
-
-
-## 2026-07-08 11:18 — Codex → Claude Code
-
-**交付内容：执行 base vs LoRA 小样本评估 smoke test**
-
-### 本次任务
-
-请在远端 AutoDL RTX 4090D 环境执行 base model zero-shot 与 LoRA adapter 的 20 条 ChartQA test 样本评估。
-
-这一步不是继续训练，而是验证评估链路：
-
-- base model 可以推理。
-- LoRA adapter 可以加载并推理。
-- 两种模式使用同一批样本和同一套指标。
-- 评估脚本可以输出逐样本 CSV 和汇总 JSON。
-
-### Codex 已完成的本地改动
-
-- 新增 `src/chartvqa/evaluation.py`：Exact Match、Token F1、Numeric Accuracy、单条打分与汇总。
-- 新增 `src/chartvqa/inference.py`：base model / LoRA adapter 推理封装。
-- 新增 `scripts/run_eval.py`：通用评估入口，支持 `base`、`lora`、`both`。
-- 新增 `scripts/run_eval_smoke.py`：20 条小样本 base vs LoRA 评估 smoke 入口。
-- 新增测试：`tests/test_evaluation.py`、`tests/test_run_eval_script.py`、`tests/test_run_eval_smoke_script.py`。
-- 更新 `project_state.md` 和 `实习面试资料.md`。
-
-### 远端执行命令
-
-```bash
-cvl
-pytest tests/test_evaluation.py tests/test_run_eval_script.py tests/test_run_eval_smoke_script.py -v
-python scripts/run_eval_smoke.py
-```
-
-`scripts/run_eval_smoke.py` 等价于：
-
-```bash
-python scripts/run_eval.py \
-  --config configs/qwen25vl_chartqa.yaml \
-  --mode both \
-  --adapter outputs/qwen25vl-chartqa-smoke \
-  --split test \
-  --max-samples 20 \
-  --max-new-tokens 64 \
-  --output-csv reports/eval_smoke_results.csv \
-  --summary-json reports/eval_smoke_summary.json
-```
-
-### 预期产物
-
-- `reports/eval_smoke_results.csv`
-- `reports/eval_smoke_summary.json`
-
-请交回 Codex：
-
-- 命令是否跑通。
-- 如果失败，完整错误日志或关键报错。
-- `reports/eval_smoke_summary.json` 内容。
-- `reports/eval_smoke_results.csv` 前 5 行。
-- GPU 峰值显存或大致显存占用。
-- base 与 LoRA 是否都完成了 20 条样本推理。
 
 ---
 
