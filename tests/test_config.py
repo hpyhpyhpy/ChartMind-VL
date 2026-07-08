@@ -23,3 +23,14 @@ def test_default_config_contains_required_sections() -> None:
         "evaluation",
         "output",
     }
+
+
+def test_lora_1epoch_config_runs_full_epoch_without_smoke_step_cap() -> None:
+    config = load_config("configs/qwen25vl_chartqa_lora_1epoch.yaml")
+
+    assert config["dataset"]["train_split"] == "train[:1%]"
+    assert config["training"]["output_dir"] == "outputs/qwen25vl-chartqa-lora-1epoch"
+    assert config["training"]["num_train_epochs"] == 1
+    assert config["training"]["max_steps"] == -1
+    assert config["training"]["save_strategy"] == "epoch"
+    assert config["training"]["eval_strategy"] == "no"

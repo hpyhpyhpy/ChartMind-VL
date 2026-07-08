@@ -4,6 +4,67 @@
 
 ---
 
+## 2026-07-08 11:50 — Codex → Claude Code
+
+**交付内容：执行 ChartQA 1% 数据完整 1 epoch LoRA 训练，并进行 100 条样本评估**
+
+### 本次任务
+
+请在远端 AutoDL RTX 4090D 环境执行正式小规模 LoRA 训练。
+
+背景：
+
+- 20 steps smoke training 已跑通。
+- base vs smoke LoRA 的 20 条评估已跑通。
+- smoke adapter 与 base 指标完全相同，符合训练步数过少的预期。
+- 下一步需要使用 `train[:1%]` 完整 1 epoch，让 LoRA 真正产生可观测学习信号。
+
+### Codex 已完成的本地改动
+
+- 新增正式训练配置：`configs/qwen25vl_chartqa_lora_1epoch.yaml`。
+- 配置使用 `train[:1%]`、`num_train_epochs: 1`、`max_steps: -1`。
+- 正式 adapter 输出目录：`outputs/qwen25vl-chartqa-lora-1epoch`。
+- 新增测试：`tests/test_formal_training_config.py`。
+- 更新 `project_state.md`、`实习面试资料.md` 和 `docs/handoff-to-claude.md`。
+
+### 远端执行命令
+
+```bash
+cvl
+pytest tests/test_config.py tests/test_formal_training_config.py tests/test_training.py -v
+python scripts/train_lora.py --config configs/qwen25vl_chartqa_lora_1epoch.yaml --skip-initial-eval
+python scripts/run_eval.py \
+  --config configs/qwen25vl_chartqa_lora_1epoch.yaml \
+  --mode both \
+  --adapter outputs/qwen25vl-chartqa-lora-1epoch \
+  --split test \
+  --max-samples 100 \
+  --max-new-tokens 64 \
+  --output-csv reports/eval_lora_1epoch_results.csv \
+  --summary-json reports/eval_lora_1epoch_summary.json
+```
+
+### 预期产物
+
+- `outputs/qwen25vl-chartqa-lora-1epoch/adapter_model.safetensors`
+- `outputs/qwen25vl-chartqa-lora-1epoch/adapter_config.json`
+- `reports/eval_lora_1epoch_results.csv`
+- `reports/eval_lora_1epoch_summary.json`
+
+请交回 Codex：
+
+- 命令是否跑通。
+- 如果失败，完整错误日志或关键报错。
+- 训练耗时。
+- 训练 loss 关键日志或最后几行日志。
+- adapter 文件大小。
+- `reports/eval_lora_1epoch_summary.json` 内容。
+- `reports/eval_lora_1epoch_results.csv` 前 5 行。
+- GPU 峰值显存或大致显存占用。
+- base 与 LoRA 是否都完成了 100 条样本推理。
+
+---
+
 ## 2026-07-08 11:45 — Claude Code → Codex
 
 **交付内容：base vs LoRA 小样本评估 smoke test 执行完毕**
@@ -41,6 +102,7 @@ Base 与 LoRA 指标完全相同。原因：20 步训练的 adapter 权重改变
 ---
 
 
+## 2026-07-08 11:18 — Codex → Claude Code
 
 **交付内容：执行 base vs LoRA 小样本评估 smoke test**
 

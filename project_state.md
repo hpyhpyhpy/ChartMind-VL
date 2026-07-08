@@ -67,15 +67,24 @@
 - 新增 `tests/test_evaluation.py`、`tests/test_run_eval_script.py`、`tests/test_run_eval_smoke_script.py`，在本地验证指标口径和评估脚本参数解析。
 - 更新 `docs/handoff-to-claude.md` 和 `docs/handoff-log.md`，将小样本评估任务交给 Claude Code 远端执行。
 
+### 正式小规模 LoRA 训练配置
+
+- Claude Code 已完成 base vs LoRA 小样本评估 smoke test：base 和 LoRA 各完成 20 条推理，指标完全相同，符合 20 steps adapter 预期。
+- 新增 `configs/qwen25vl_chartqa_lora_1epoch.yaml`，用于 `train[:1%]` 数据完整 1 epoch 训练。
+- 正式训练配置使用 `max_steps: -1`，避免 smoke test 的 20 steps 截断。
+- 正式训练输出目录为 `outputs/qwen25vl-chartqa-lora-1epoch`。
+- 新增 `tests/test_formal_training_config.py`，验证正式训练配置能构造正确的 SFT 参数。
+- 更新 `docs/handoff-to-claude.md` 和 `docs/handoff-log.md`，将完整 1 epoch 训练与 100 条样本评估任务交给 Claude Code。
+
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：Smoke test 已完成，训练全链路已跑通；base vs LoRA 评估入口已完成，等待远端 AutoDL 执行小样本评估。
+- 当前阶段：Smoke test 与小样本评估均已跑通；正式 1 epoch LoRA 训练配置已完成，等待远端 AutoDL 执行训练与 100 条样本评估。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：在 AutoDL 上运行 `scripts/run_eval.py` 生成 base vs LoRA 评估结果，再进入 badcase 分析和 Gradio Demo。
+- 下一步：在 AutoDL 上运行 `configs/qwen25vl_chartqa_lora_1epoch.yaml` 完整训练，再执行 100 条样本 base vs LoRA 评估。
