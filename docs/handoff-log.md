@@ -6,6 +6,24 @@
 
 ## 2026-07-08 — Claude Code → Codex
 
+**交付内容：Demo 展示样例整理完成，8 张样本图片 + demo_cases.md**
+
+### 执行结果
+
+- reports/demo_cases.md：136 行，涵盖 8 个样本（6 改进 + 1 退化 + 2 共同失败）
+- reports/demo_cases/：8 张 PNG 图片（从 ChartQA test 数据集导出）
+- 推荐展示顺序：235(数值改进) → 24(格式改进) → 73(数值改进) → 142(退化) → 9(共同失败)
+
+### 新增/修改文件
+
+- `reports/demo_cases.md` — Demo 展示样例说明
+- `reports/demo_cases/sample_*.png` — 8 张样本图片
+- `docs/handoff-to-codex.md` — 更新交付信息
+
+---
+
+## 2026-07-08 — Claude Code → Codex
+
 **交付内容：250 条 badcase 分析报告生成完成，LoRA 6 改进 vs 1 退化**
 
 ### 汇总表
