@@ -76,15 +76,27 @@
 - 新增 `tests/test_formal_training_config.py`，验证正式训练配置能构造正确的 SFT 参数。
 - 更新 `docs/handoff-to-claude.md` 和 `docs/handoff-log.md`，将完整 1 epoch 训练与 100 条样本评估任务交给 Claude Code。
 
+### 1 Epoch 训练结果与 Badcase 分析入口
+
+- Claude Code 已完成 ChartQA `train[:1%]` 完整 1 epoch LoRA 训练：36 steps，耗时 3 分 02 秒，adapter 约 4.9 MB，显存峰值约 23 GB。
+- 评估数据为 `test[:1%]`，实际 25 条样本；LoRA 在三项指标上均超过 Base：
+  - Exact Match：0.20 -> 0.24
+  - Token F1：0.28 -> 0.33
+  - Numeric Accuracy：0.48 -> 0.52
+- 新增 `reports/experiments.md`，记录 smoke training 与 1 epoch LoRA 实验结果。
+- 新增 `src/chartvqa/badcase.py`，按样本 index 对齐 base 与 LoRA 预测，分类 `lora_improved`、`lora_regressed`、`both_correct`、`both_wrong`，并标注错误类型。
+- 新增 `scripts/analyze_badcases.py`，读取 `reports/eval_lora_1epoch_results.csv` 并生成 `reports/badcase_analysis.md`。
+- 新增 `tests/test_badcase.py` 和 `tests/test_analyze_badcases_script.py`，覆盖 badcase 分类和报告渲染。
+
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：Smoke test 与小样本评估均已跑通；正式 1 epoch LoRA 训练配置已完成，等待远端 AutoDL 执行训练与 100 条样本评估。
+- 当前阶段：1 epoch LoRA 训练和 25 条样本评估已完成，LoRA 指标开始超过 Base；badcase 分析入口已完成，等待同步远端 CSV 后生成 badcase 报告。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：在 AutoDL 上运行 `configs/qwen25vl_chartqa_lora_1epoch.yaml` 完整训练，再执行 100 条样本 base vs LoRA 评估。
+- 下一步：基于 `reports/eval_lora_1epoch_results.csv` 生成 badcase 报告；随后可扩大评估 split 至 `test[:4%]` 或启动 Gradio Demo。

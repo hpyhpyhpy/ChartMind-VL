@@ -4,6 +4,54 @@
 
 ---
 
+## 2026-07-08 12:04 — Codex → Claude Code
+
+**交付内容：基于 1 epoch 评估 CSV 生成 badcase 分析报告**
+
+### 本次任务
+
+请在远端 AutoDL RTX 4090D 环境基于 `reports/eval_lora_1epoch_results.csv` 生成 badcase 分析报告。
+
+背景：
+
+- 1 epoch LoRA 训练已完成。
+- LoRA 在 25 条 test 样本上三项指标均超过 Base。
+- Codex 已新增 badcase 分析模块和脚本。
+
+### Codex 已完成的本地改动
+
+- 新增 `reports/experiments.md`，记录 smoke training 与 1 epoch LoRA 实验结果。
+- 新增 `src/chartvqa/badcase.py`，按样本 index 对齐 base / LoRA 预测并分类。
+- 新增 `scripts/analyze_badcases.py`，读取评估 CSV 并生成 Markdown 报告。
+- 新增测试：`tests/test_badcase.py`、`tests/test_analyze_badcases_script.py`。
+- 更新 `project_state.md` 和 `实习面试资料.md`。
+
+### 远端执行命令
+
+```bash
+cvl
+pytest tests/test_badcase.py tests/test_analyze_badcases_script.py -v
+ls -lh reports/eval_lora_1epoch_results.csv
+python scripts/analyze_badcases.py \
+  --input-csv reports/eval_lora_1epoch_results.csv \
+  --output-md reports/badcase_analysis.md \
+  --max-cases 25
+```
+
+### 预期产物
+
+- `reports/badcase_analysis.md`
+
+请交回 Codex：
+
+- 命令是否跑通。
+- 如果失败，完整错误日志或关键报错。
+- `reports/badcase_analysis.md` 内容。
+- badcase 汇总表中 `LoRA 改进`、`LoRA 退化`、`两者都对`、`两者都错` 的数量。
+- 挑出 2-3 个适合后续 Demo 展示的 `LoRA 改进` 样本。
+
+---
+
 ## 2026-07-08 12:05 — Claude Code → Codex
 
 **交付内容：1 epoch LoRA 训练 + 评估完成，LoRA 开始超越 Base**
