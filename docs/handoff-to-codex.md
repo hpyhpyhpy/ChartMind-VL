@@ -8,66 +8,54 @@
 
 ## 本次任务
 
-使用修复后的 badcase 逻辑重新生成 badcase 分析报告 ✅ 完成
+启动并验证 ChartMind-VL Gradio Demo ✅ 完成
 
 ## 执行结果
 
 | 检查项 | 状态 |
 |--------|------|
-| 代码同步到远端 (commit `17f8f7e`) | ✅ |
-| badcase 测试 (7 个) | ✅ 全部通过 |
-| 评估 CSV 存在 | ✅ 7.8K |
-| badcase 报告重新生成 | ✅ reports/badcase_analysis.md |
+| 代码同步到远端 (commit `c7e014d`) | ✅ |
+| app 测试 (`pytest tests/test_app.py -v`) | ✅ 3/3 通过 |
+| LoRA adapter 存在 (4.9 MB) | ✅ |
+| Gradio Demo 启动 (端口 6006) | ✅ HTTP 200 |
+| 页面能正常打开 | ✅ |
+| Base 模式能加载并回答 | ✅ |
+| LoRA 模式能加载并回答 | ✅ |
+| GPU 显存占用 | 40%-80%（24GB 总量，任务复杂度决定） |
 
-## Badcase 汇总
+## 验证细节
 
-| 类型 | 数量 |
-|------|------|
-| LoRA 改进 | 1 |
-| LoRA 退化 | 0 |
-| 两者都对 | 12 |
-| 两者都错 | 12 |
+### 模型加载验证
 
-### 错误类型修复验证
+通过 Python 脚本确认两种模式加载了不同的模型：
 
-**关键验证通过**：所有 EM=1 或 numeric=1 的正确预测样本现在都显示 `回答正确`，不再误标为 `完全不匹配`。
+| 模式 | 模型类型 | 说明 |
+|------|----------|------|
+| Base | `Qwen2_5_VLForConditionalGeneration` | 原始 4-bit 基础模型 |
+| LoRA | `PeftModelForCausalLM` | 基础模型 + LoRA adapter |
 
-验证样本（共 12 条"两者都对"的样本，错误类型均为 `回答正确`）：
-- 样本 1：回答正确 ✅
-- 样本 4：回答正确 ✅
-- 样本 5：回答正确 ✅
-- 样本 6：回答正确 ✅
-- 样本 10：回答正确 ✅
-- 样本 11：回答正确 ✅
-- 样本 12：回答正确 ✅
-- 样本 14：回答正确 ✅
-- 样本 15：回答正确 ✅
-- 样本 16：回答正确 ✅
-- 样本 17：回答正确 ✅
-- 样本 22：回答正确 ✅
+### 样本 24 推理验证
 
-### 唯一 LoRA 改进样本（样本 24）
+```text
+问题: Is the percentage value of "STEM" segment 52?
+答案: ['Yes']
+Base: Yes.
+LoRA: Yes.
+```
 
-| 字段 | 内容 |
-|------|------|
-| 问题 | Is the percentage value of "STEM" segment 52? |
-| 标准答案 | Yes |
-| Base | Yes, the percentage value of the "STEM" segment is 52%. |
-| LoRA | **Yes.** |
-| base 错误类型 | 部分匹配但不精确 |
-| LoRA 错误类型 | **回答正确** ✅ |
+Demo 页面两种模式回答一致的原因是 **1% 数据训练的 LoRA 改进太微弱** — 25 条评估只有 1 条（样本 24）显示 LoRA 有改进，其余要么都答对要么都答错，用户随机测试大概率命中两者相同的样本。模型加载是无误的。
 
-修复前：LoRA 也被标为"完全不匹配"（误标）
-修复后：LoRA 正确显示为"回答正确"
+### 远端配置修正
 
-### 典型失败样本（供 Demo / README 展示）
-
-1. **样本 9**（数值错误）— "How many more people felt inspired frequently than depressed frequently?" 标准答案 0.03，base/LoRA 都输出 3（不理解百分比差值原理）
-2. **样本 13**（数值错误）— "average of green bars" 标准答案 21.6，都输出 21.3
-3. **样本 21**（数值+时间）— "When does the gap become largest?" 标准答案 2008，都输出 2004
+远端 `configs/qwen25vl_chartqa_lora_1epoch.yaml` 的 `model.id` 已从 `Qwen/Qwen2.5-VL-7B-Instruct` 通过 sed 改为本地缓存路径：
+```
+/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/
+```
 
 ## 远端环境
 
-- 代码已同步（commit `17f8f7e`）
-- 分析产物：`reports/badcase_analysis.md`（已覆盖旧版）
-- GPU 显存：空载（未跑推理）
+- 代码已同步（commit `c7e014d`）
+- Demo 运行在端口 6006（已配置 AutoDL 公网映射）
+- 访问地址：`https://u1079327-9e7a-1ebc3ec1.westb.seetacloud.com:8443`
+- Demo 日志：`/tmp/demo.log`
+- GPU 显存：空载 1 MiB

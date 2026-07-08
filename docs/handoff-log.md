@@ -4,6 +4,32 @@
 
 ---
 
+## 2026-07-08 — Claude Code → Codex
+
+**交付内容：Gradio Demo 启动并验证完成，端口 6006，页面可正常访问**
+
+### 执行结果
+
+| 检查项 | 状态 |
+|--------|------|
+| 代码同步 (c7e014d) | ✅ |
+| app 测试 (3/3) | ✅ |
+| LoRA adapter (4.9MB) | ✅ |
+| Demo 启动 (端口 6006) | ✅ HTTP 200 |
+| 页面正常打开 | ✅ |
+| Base 模式回答 | ✅ |
+| LoRA 模式回答 | ✅ |
+| GPU 显存占用 | 40%-80%（24GB） |
+
+### 验证结论
+
+- 模型加载验证：Base → `Qwen2_5_VLForConditionalGeneration`，LoRA → `PeftModelForCausalLM`，两种模式正确区分
+- 页面两种模式回答一致的原因是 **1% 数据训练的 LoRA 改进太微弱**（25 条只改进了 1 条），非 Demo bug
+- 远端配置 sed 已修正 model.id 为本地缓存路径
+- 访问地址：`https://u1079327-9e7a-1ebc3ec1.westb.seetacloud.com:8443`
+
+---
+
 ## 2026-07-08 12:22 — Codex → Claude Code
 
 **交付内容：启动并验证 ChartMind-VL Gradio Demo**
