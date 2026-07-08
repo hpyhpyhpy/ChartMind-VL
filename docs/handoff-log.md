@@ -352,3 +352,58 @@ Claude Code 不继续，全权交由 Codex 负责：
 
 > 由 ChartMind-VL 项目负责人提供，每次重启实例后连接信息可能变更。
 > 连接后执行 `cvl` 一键进入工作目录。
+## 2026-07-08 13:12 — Codex → Claude Code
+
+**交付内容：扩大 base vs LoRA 评估样本量**
+
+### Codex 本地完成情况
+
+- 新增 `README.md`，整理 ChartMind-VL 第一阶段展示文档，包含项目定位、训练结果、base vs LoRA 指标、badcase 分析、Demo 使用方式、AutoDL 命令、当前限制和后续计划。
+- 更新 `project_state.md`，记录 Gradio Demo 远端验证结果和 README 展示文档。
+- 更新 `实习面试资料.md`，补充 Demo 验证和 README 阶段的面试问答。
+- 本地验证通过：
+  - `pytest -v`：33 passed
+  - `python -m compileall -q app.py src scripts tests`：通过
+
+### 下一步交给 Claude Code
+
+请在远端 AutoDL RTX 4090D 环境复用 `outputs/qwen25vl-chartqa-lora-1epoch/`，扩大评估样本量：
+
+```bash
+cvl
+python scripts/run_eval.py \
+  --config configs/qwen25vl_chartqa_lora_1epoch.yaml \
+  --mode both \
+  --adapter outputs/qwen25vl-chartqa-lora-1epoch \
+  --split test \
+  --max-samples 100 \
+  --max-new-tokens 64 \
+  --output-csv reports/eval_lora_1epoch_100_results.csv \
+  --summary-json reports/eval_lora_1epoch_100_summary.json
+```
+
+如果 100 条评估顺利且成本可接受，再执行：
+
+```bash
+python scripts/run_eval.py \
+  --config configs/qwen25vl_chartqa_lora_1epoch.yaml \
+  --mode both \
+  --adapter outputs/qwen25vl-chartqa-lora-1epoch \
+  --split test \
+  --max-samples 250 \
+  --max-new-tokens 64 \
+  --output-csv reports/eval_lora_1epoch_250_results.csv \
+  --summary-json reports/eval_lora_1epoch_250_summary.json
+```
+
+### 需要回传
+
+- 命令是否跑通。
+- 每轮评估耗时。
+- `reports/eval_lora_1epoch_100_summary.json` 内容。
+- 如果执行 250 条，也回传 `reports/eval_lora_1epoch_250_summary.json` 内容。
+- `reports/eval_lora_1epoch_100_results.csv` 前 5 行。
+- base 与 LoRA 是否都完成指定样本数推理。
+- GPU 峰值显存或大致显存占用。
+
+---

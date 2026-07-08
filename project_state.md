@@ -97,16 +97,21 @@
 - Demo 默认使用 `configs/qwen25vl_chartqa_lora_1epoch.yaml` 和 `outputs/qwen25vl-chartqa-lora-1epoch`。
 - 新增 `tests/test_app.py`，在本地验证 Demo 默认参数、Base/LoRA adapter 选择逻辑和输入校验；本地不启动 Gradio、不加载大模型。
 - 更新 `docs/handoff-to-claude.md` 和 `docs/handoff-log.md`，将远端 Demo 启动验证交给 Claude Code。
+- Claude Code 已在远端验证 Gradio Demo：页面可正常访问，Base 与 LoRA 模式均可加载并回答；Base 为 `Qwen2_5_VLForConditionalGeneration`，LoRA 为 `PeftModelForCausalLM`。
+
+### README 展示文档
+
+- 新增 `README.md`，整理项目定位、技术路线、训练结果、评估指标、badcase 分析、Demo 使用方式、AutoDL 命令、当前限制和后续计划。
 
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：1 epoch LoRA 训练和 25 条样本评估已完成，LoRA 指标开始超过 Base；badcase 报告已重跑验证；Gradio Demo 入口已完成，等待远端启动验证。
+- 当前阶段：第一阶段最小闭环已完成，包含训练 smoke test、1 epoch LoRA、base vs LoRA 评估、badcase 分析和 Gradio Demo。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：让 Claude Code 在 AutoDL 上启动 `app.py`，验证 Gradio Demo 可访问，并用 LoRA 改进样本与典型失败样本做人工体验检查。
+- 下一步：扩大评估 split 至 `test[:4%]` 或增加训练数据比例，获取更稳定指标；也可以开始整理 README 截图和简历展示材料。

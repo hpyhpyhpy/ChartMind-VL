@@ -4,25 +4,30 @@
 
 ## 交付时间
 
-2026-07-08 12:22
+2026-07-08 13:12
 
 ## 本次任务
 
-请在远端 AutoDL RTX 4090D 环境启动并验证 **ChartMind-VL Gradio Demo**。
+请在远端 AutoDL RTX 4090D 环境复用已训练好的 1 epoch LoRA adapter，扩大评估样本量，验证 LoRA 相对 Base 的提升是否更稳定。
 
 背景：
 
-- 1 epoch LoRA 训练已完成，LoRA 在 25 条样本上三项指标均超过 Base。
-- 修复后的 badcase 报告已生成。
-- Codex 已新增 `app.py`，提供上传图片、输入问题、选择 Base/LoRA 并生成回答的 Demo 入口。
+- 第一阶段最小闭环已经完成：训练 smoke test、1 epoch LoRA、base vs LoRA 评估、badcase 分析、Gradio Demo 均已跑通。
+- 当前已知指标来自 `test[:1%]`，实际只有 25 条样本：
+  - EM：0.20 -> 0.24
+  - F1：0.28 -> 0.33
+  - Numeric Accuracy：0.48 -> 0.52
+- 25 条样本可以证明链路和学习信号，但不足以作为更稳的实验结论。
+- Codex 已新增 `README.md`，并更新 `project_state.md` 与 `实习面试资料.md`，把第一阶段成果整理为展示材料。
 
 ## Codex 已完成的本地改动
 
-- 新增 `app.py`，支持上传图片、输入问题、选择 Base/LoRA 并生成回答。
-- Demo 默认配置：`configs/qwen25vl_chartqa_lora_1epoch.yaml`。
-- Demo 默认 adapter：`outputs/qwen25vl-chartqa-lora-1epoch`。
-- 新增 `tests/test_app.py`。
-- 更新 `project_state.md` 和 `实习面试资料.md`。
+- 新增 `README.md`，整理项目定位、训练结果、评估指标、badcase、Demo、AutoDL 命令、当前限制和后续计划。
+- 更新 `project_state.md`，记录 Gradio Demo 远端验证结果和 README 展示文档。
+- 更新 `实习面试资料.md`，补充 Demo 验证和 README 阶段的面试问答。
+- 本地验证通过：
+  - `pytest -v`：33 passed
+  - `python -m compileall -q app.py src scripts tests`：通过
 
 ## 远端执行前提
 
@@ -33,13 +38,15 @@
 - 快速进入命令：`cvl`
 - LoRA adapter：`outputs/qwen25vl-chartqa-lora-1epoch/`
 - Qwen2.5-VL 模型已缓存到数据盘。
-- Gradio 已安装在远端环境中。
 
 注意：
 
-- 本次只验证 Demo 启动和基础交互，不需要重新训练。
-- 如果远端还没有同步最新代码，请先同步 `app.py` 和 `tests/test_app.py`。
-- 远端 `configs/qwen25vl_chartqa_lora_1epoch.yaml` 的 `model.id` 仍需保持本地模型路径。
+- 本次不需要重新训练，只做扩大评估。
+- 远端 `configs/qwen25vl_chartqa_lora_1epoch.yaml` 的 `model.id` 仍需保持本地模型路径：
+
+```text
+/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/
+```
 
 ## 请执行的命令
 
@@ -49,49 +56,64 @@
 cvl
 ```
 
-确认最新代码已同步后，先跑 Demo 相关测试：
-
-```bash
-pytest tests/test_app.py -v
-```
-
 确认 adapter 存在：
 
 ```bash
 ls -lh outputs/qwen25vl-chartqa-lora-1epoch/adapter_model.safetensors
 ```
 
-启动 Demo：
+建议先跑 100 条样本评估。如果耗时和显存可接受，再跑 250 条。
+
+### 100 条评估
 
 ```bash
-python app.py \
+python scripts/run_eval.py \
   --config configs/qwen25vl_chartqa_lora_1epoch.yaml \
+  --mode both \
   --adapter outputs/qwen25vl-chartqa-lora-1epoch \
-  --server-name 0.0.0.0 \
-  --server-port 7860
+  --split test \
+  --max-samples 100 \
+  --max-new-tokens 64 \
+  --output-csv reports/eval_lora_1epoch_100_results.csv \
+  --summary-json reports/eval_lora_1epoch_100_summary.json
 ```
 
-## 预期结果
+### 可选：250 条评估
 
-请确认 Gradio Demo 可以访问，并至少完成一次页面加载。
+如果 100 条评估顺利完成，且单次运行成本可接受，请继续执行：
 
-请将以下信息交回 Codex：
+```bash
+python scripts/run_eval.py \
+  --config configs/qwen25vl_chartqa_lora_1epoch.yaml \
+  --mode both \
+  --adapter outputs/qwen25vl-chartqa-lora-1epoch \
+  --split test \
+  --max-samples 250 \
+  --max-new-tokens 64 \
+  --output-csv reports/eval_lora_1epoch_250_results.csv \
+  --summary-json reports/eval_lora_1epoch_250_summary.json
+```
+
+## 预期产物
+
+- `reports/eval_lora_1epoch_100_results.csv`
+- `reports/eval_lora_1epoch_100_summary.json`
+- 可选：
+  - `reports/eval_lora_1epoch_250_results.csv`
+  - `reports/eval_lora_1epoch_250_summary.json`
+
+## 请交回 Codex
 
 - 命令是否跑通。
 - 如果失败，完整错误日志或关键报错。
-- Demo 本地或公网访问地址。
-- 页面是否能正常打开。
-- Base 模式是否能加载并回答。
-- LoRA 模式是否能加载并回答。
-- 推理时 GPU 峰值显存或大致显存占用。
-- 如能手动测试，请用样本 24 的问题验证 LoRA 是否输出更简洁的 `Yes.` 风格回答。
+- 每轮评估耗时。
+- `reports/eval_lora_1epoch_100_summary.json` 内容。
+- 如果执行了 250 条，也请给出 `reports/eval_lora_1epoch_250_summary.json` 内容。
+- `reports/eval_lora_1epoch_100_results.csv` 前 5 行。
+- base 与 LoRA 是否都完成指定样本数推理。
+- GPU 峰值显存或大致显存占用。
 
-## 可能风险
+## 判断标准
 
-- Demo 首次点击会加载模型，可能比较慢。
-- Base 与 LoRA 两种模式分别加载模型，显存可能接近 22-23 GB。如 OOM，可只测 LoRA 模式，或重启进程后单独测 Base。
-- 如果 `model.id` 路径报错，请检查远端配置是否仍指向本地模型缓存路径。
-
-```bash
-python app.py --config configs/qwen25vl_chartqa_lora_1epoch.yaml --adapter outputs/qwen25vl-chartqa-lora-1epoch
-```
+- 如果 100 条或 250 条上 LoRA 仍优于 Base，说明 1 epoch LoRA 的收益比 25 条结果更可信。
+- 如果提升消失或反转，也不是失败，说明 25 条样本存在波动；下一步应优先做更细 badcase 分析，而不是直接扩大训练。
