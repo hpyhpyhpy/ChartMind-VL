@@ -26,6 +26,7 @@ def build_sft_config_kwargs(
             training_config["gradient_accumulation_steps"]
         ),
         "gradient_checkpointing": bool(training_config["gradient_checkpointing"]),
+        "bf16": bool(training_config.get("bf16", False)),
         "learning_rate": float(training_config["learning_rate"]),
         "logging_steps": int(training_config["logging_steps"]),
         "eval_steps": int(training_config["eval_steps"]),
@@ -33,11 +34,12 @@ def build_sft_config_kwargs(
         "eval_strategy": training_config["eval_strategy"],
         "save_strategy": training_config["save_strategy"],
         "max_steps": resolved_max_steps,
-        "max_seq_length": int(training_config["max_seq_length"]),
+        "max_length": int(training_config["max_seq_length"]),
         "max_grad_norm": float(training_config["max_grad_norm"]),
         "warmup_steps": int(training_config["warmup_steps"]),
         "load_best_model_at_end": bool(training_config["load_best_model_at_end"]),
         "remove_unused_columns": bool(training_config["remove_unused_columns"]),
+        "save_only_model": bool(training_config.get("save_only_model", False)),
         "optim": training_config["optim"],
         "dataset_kwargs": {"skip_prepare_dataset": True},
     }

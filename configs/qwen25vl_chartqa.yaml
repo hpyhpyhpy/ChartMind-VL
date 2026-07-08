@@ -44,6 +44,8 @@ training:
   remove_unused_columns: false
   gradient_checkpointing: true
   load_best_model_at_end: false
+  bf16: true
+  save_only_model: true
 
 evaluation:
   max_samples: 100

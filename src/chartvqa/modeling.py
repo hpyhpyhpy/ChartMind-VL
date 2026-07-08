@@ -68,7 +68,6 @@ def load_model_and_processor(
 
     model_kwargs: dict[str, Any] = {
         "device_map": "auto",
-        "use_cache": not train,
     }
     if load_in_4bit:
         model_kwargs["quantization_config"] = build_bnb_config(config)
@@ -81,6 +80,7 @@ def load_model_and_processor(
         model_id,
         **model_kwargs,
     )
+    model.config.use_cache = not train
     processor_kwargs = {
         key: model_config[key]
         for key in ("min_pixels", "max_pixels")
