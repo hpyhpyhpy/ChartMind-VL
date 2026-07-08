@@ -110,6 +110,20 @@ Demo 支持：
 - Base 使用 `Qwen2_5_VLForConditionalGeneration`
 - LoRA 使用 `PeftModelForCausalLM`
 
+### 推荐展示样例
+
+基于 250 条 badcase 分析，远端已整理 `reports/demo_cases.md`，并导出 8 张样本图片到 `reports/demo_cases/`。推荐 Demo 展示顺序：
+
+| 顺序 | 样本 | 类型 | 展示话术 |
+|------|------|------|----------|
+| 1 | 235 | 数值改进 | Base 加法算错，LoRA 给出正确答案 `3.2` |
+| 2 | 24 | 格式改进 | LoRA 输出 `Yes.`，比 Base 冗长回答更贴近 ChartQA 短答案 |
+| 3 | 73 | 数值改进 | LoRA 输出 `21.5%`，Base 未给出最终数值 |
+| 4 | 142 | 退化边界 | Base 输出 `No.`，LoRA 变长后从精确匹配退化为部分匹配 |
+| 5 | 9 | 共同失败 | Base 和 LoRA 都答 `3`，标准答案为 `0.03`，体现百分比差值短板 |
+
+这组样例用于形成平衡叙事：LoRA 有小幅改进，也有退化和共同失败边界。目前这些样例尚未完成 Gradio 页面手动逐项验证。
+
 ## 目录结构
 
 ```text
@@ -134,6 +148,7 @@ app.py
 reports/
   experiments.md
   badcase_analysis_250_summary.md
+  demo_cases.md
   badcase_analysis.md
 tests/
 ```
@@ -213,7 +228,7 @@ python app.py \
 
 ## 后续计划
 
-- 基于 250 条 badcase 筛选更适合 Demo 展示的样例。
+- 在 Gradio 页面手动验证推荐 Demo 样例，确认页面输出与 CSV 记录大体一致。
 - 尝试更长 `max_seq_length`，例如 256 或 512。
 - 增加训练数据比例，如 `train[:3%]`。
 - 对比 LoRA rank：`r=8`、`r=16`。

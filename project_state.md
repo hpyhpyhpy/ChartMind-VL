@@ -133,15 +133,29 @@
 - 新增 `reports/badcase_analysis_250_summary.md`，在本地沉淀 250 条 badcase 摘要。
 - 更新 `README.md`、`reports/experiments.md`、`实习面试资料.md`，将 250 条 badcase 分析写入项目复盘。
 
+### Demo 展示样例整理
+
+- Claude Code 已在远端基于 250 条 badcase 结果整理 Demo 展示样例。
+- 远端生成 `reports/demo_cases.md`，包含 8 个样例的图片路径、问题、标准答案、Base 回答、LoRA 回答和展示话术。
+- 远端导出 8 张样本图片到 `reports/demo_cases/`：
+  - 样本 24、73、205、235、244、142、9、13
+- 推荐 Demo 展示顺序：
+  - 样本 235：数值改进，Base 加法算错，LoRA 输出 `3.2`
+  - 样本 24：格式改进，LoRA 输出 `Yes.`
+  - 样本 73：数值改进，LoRA 输出 `21.5%`
+  - 样本 142：退化边界，Base 的 `No.` 更精确
+  - 样本 9：共同失败，百分比差值问题两者都答错
+- 当前尚未进行 Gradio 页面手动验证，下一步需要验证样例在 Demo 中的实际输出是否与 CSV 记录一致或大体一致。
+
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：第一阶段最小闭环已完成，250 条评估与 badcase 分析已说明 LoRA 有微弱正收益、极低退化和明显数值推理短板。
+- 当前阶段：第一阶段最小闭环已完成，250 条评估、badcase 分析和 Demo 样例整理已完成；Demo 样例仍待页面手动验证。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：筛选 Demo 展示样例，准备面试展示材料；之后再考虑增加训练数据比例、调整 `max_seq_length` 或围绕数值错误做专项优化。
+- 下一步：在远端 Gradio 页面手动验证推荐 Demo 样例，并整理可用于面试展示的最终话术；之后再考虑增加训练数据比例、调整 `max_seq_length` 或围绕数值错误做专项优化。

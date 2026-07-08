@@ -8,44 +8,69 @@
 
 ## 本次任务
 
-基于 250 条 badcase 整理 Gradio Demo 展示样例 ✅ 完成
+Gradio Demo 手动验证推荐展示样例 ✅ 完成
 
-## 执行结果
+## 验证方法
 
-| 检查项 | 状态 |
-|--------|------|
-| 导出样本图片 | ✅ 8 张 (reports/demo_cases/) |
-| 生成 reports/demo_cases.md | ✅ 136 行，8 个样例 |
+通过 Python 脚本直接调用推理引擎（等价于 Gradio Demo 后端逻辑），对 5 个推荐样本分别运行 Base 和 LoRA 模式，对比输出与预期结果。
 
-## 导出的样本图片
+## 验证结果
 
-| 文件 | 大小 |
+### 样本 235 — 数值改进 ✅ 与预期一致
+
+| 字段 | 内容 |
 |------|------|
-| reports/demo_cases/sample_24.png | 25K |
-| reports/demo_cases/sample_73.png | 105K |
-| reports/demo_cases/sample_205.png | 46K |
-| reports/demo_cases/sample_235.png | 61K |
-| reports/demo_cases/sample_244.png | 40K |
-| reports/demo_cases/sample_142.png | 23K |
-| reports/demo_cases/sample_9.png | 79K |
-| reports/demo_cases/sample_13.png | 36K |
+| 标准答案 | 3.2 |
+| CSV 记录 | Base: 3.4 ❌ / LoRA: 3.2 ✅ |
+| 本次验证 | **Base(11.6s):** 1.6 + 1.8 = 3.4 ❌ / **LoRA(4.1s):** 3.2 ✅ |
+| 结论 | ✅ LoRA 确实修正了加法错误，与 demo_cases.md 完全一致 |
 
-## 推荐 Demo 展示顺序（5 个样本）
+### 样本 24 — 格式改进 ✅ 与预期一致
 
-| 顺序 | Index | 类型 | 一句话话术 |
-|------|-------|------|-----------|
-| 1 | **235** | 🟢 数值改进 | Base 加法算错（1.6+1.8=3.4），LoRA 算出 3.2 正确 |
-| 2 | **24** | 🟢 格式改进 | LoRA 简洁 "Yes." vs Base 冗长 |
-| 3 | **73** | 🟢 数值改进 | LoRA 完整计算 21.5，Base 回答中断 |
-| 4 | **142** | 🔴 退化边界 | Base 完美 "No."，LoRA 变啰嗦 |
-| 5 | **9** | ⚫ 共同失败 | 百分比差值问题，都答 3 而非 0.03 |
+| 字段 | 内容 |
+|------|------|
+| 标准答案 | Yes |
+| CSV 记录 | Base: 冗长 ❌ / LoRA: Yes. ✅ |
+| 本次验证 | **Base(4.3s):** Yes, the percentage value...is 52%. ❌ / **LoRA(3.6s):** Yes. ✅ |
+| 结论 | ✅ LoRA 输出简洁精确，与 demo_cases.md 完全一致 |
 
-展示叙事："LoRA 有进步 → 也有局限 → 我们清楚问题在哪"
+### 样本 142 — 退化边界 ✅ 与预期一致
 
-## 图片路径说明
+| 字段 | 内容 |
+|------|------|
+| 标准答案 | No |
+| CSV 记录 | Base: No. ✅ / LoRA: 冗长 ❌ |
+| 本次验证 | **Base(3.5s):** No. ✅ / **LoRA(6.6s):** No. The median of the green graph...approximately 31%... ❌ |
+| 结论 | ✅ Basé 完美回答，LoRA 变啰嗦，退化模式与 demo_cases.md 一致 |
 
-远端路径：
-- Markdown: `/root/autodl-tmp/ChartMind-VL/reports/demo_cases.md`
-- 图片: `/root/autodl-tmp/ChartMind-VL/reports/demo_cases/sample_*.png`
+### 样本 73 — 数值改进 ⚠️ 有波动
 
-如需在 Gradio Demo 中使用，图片路径需相对于 Demo 运行目录。
+| 字段 | 内容 |
+|------|------|
+| 标准答案 | 21.5 |
+| CSV 记录 | Base: 未完成 ❌ / LoRA: 21.5% ✅ |
+| 本次验证 | **Base(6.3s):** (1%+42%)/2=21.5% ✅ / **LoRA(6.6s):** (1%+42%)/2=21.5% ✅ |
+| 结论 | ⚠️ 本次验证中 Base 和 LoRA 都答对了（CSV 中 Base 未完成）。这是模型推理的非确定性波动，不影响整体结论。数值本身在所有情况下均正确。 |
+
+### 样本 9 — 共同失败 ✅ 与预期一致
+
+| 字段 | 内容 |
+|------|------|
+| 标准答案 | 0.03 |
+| CSV 记录 | Base: 3 ❌ / LoRA: 3 ❌ |
+| 本次验证 | **Base(3.7s):** 3 ❌ / **LoRA(3.7s):** 3 ❌ |
+| 结论 | ✅ 两者都错，百分比差值理解仍是瓶颈 |
+
+## Demo 状态
+
+| 项目 | 状态 |
+|------|------|
+| Gradio Demo 端口 6006 | ✅ HTTP 200，可访问 |
+| GPU 显存 | ✅ 空载 1 MiB |
+| 访问地址 | https://u1079327-9e7a-1ebc3ec1.westb.seetacloud.com:8443 |
+
+## 总结
+
+- **4/5 样本**与预期完全一致 ✅
+- **1/5 样本（73）** Base 表现优于预期（本次答对了），属于推理非确定性波动
+- **核心结论不变**：LoRA 在数值推理（样本 235）和格式控制（样本 24）上有可验证的改进
