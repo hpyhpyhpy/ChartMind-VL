@@ -118,15 +118,30 @@
 - 更新 `README.md` 和 `reports/experiments.md`，将 250 条评估作为当前更可信的阶段性结果。
 - 更新 `docs/handoff-to-claude.md` 和 `docs/handoff-log.md`，将 250 条 badcase 分析交给 Claude Code 继续执行。
 
+### 250 条 Badcase 分析
+
+- Claude Code 已在远端基于 `reports/eval_lora_1epoch_250_results.csv` 生成 `reports/badcase_analysis_250.md`。
+- 250 条 badcase 分类结果：
+  - LoRA 改进：6 条，占 2.4%
+  - LoRA 退化：1 条，占 0.4%
+  - 两者都对：113 条，占 45.2%
+  - 两者都错：130 条，占 52.0%
+- LoRA 改进主要来自两类：
+  - 答案格式更接近 ChartQA 短答案，例如从完整句子变为 `Yes.`
+  - 少量数值题修正 Base 错误，例如样本 73 和样本 235
+- LoRA 退化只有 1 条，原因是 Base 已经给出简洁正确答案，LoRA 变长后从精确匹配退化为部分匹配。
+- 新增 `reports/badcase_analysis_250_summary.md`，在本地沉淀 250 条 badcase 摘要。
+- 更新 `README.md`、`reports/experiments.md`、`实习面试资料.md`，将 250 条 badcase 分析写入项目复盘。
+
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：第一阶段最小闭环已完成，250 条 base vs LoRA 扩大评估已验证 LoRA 有微弱但方向一致的提升。
+- 当前阶段：第一阶段最小闭环已完成，250 条评估与 badcase 分析已说明 LoRA 有微弱正收益、极低退化和明显数值推理短板。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：基于 250 条逐样本评估结果生成更完整 badcase 报告，筛选 Demo 展示样例；之后再考虑增加训练数据比例或调整 `max_seq_length`。
+- 下一步：筛选 Demo 展示样例，准备面试展示材料；之后再考虑增加训练数据比例、调整 `max_seq_length` 或围绕数值错误做专项优化。

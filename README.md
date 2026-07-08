@@ -61,23 +61,27 @@
 
 ## Badcase 分析
 
-远端基于 25 条评估样本生成 badcase 报告：
+远端先基于 25 条评估样本生成初版 badcase 报告，随后基于 250 条评估样本生成更完整分析。
 
-| 类型 | 数量 |
-|------|------|
-| LoRA 改进 | 1 |
-| LoRA 退化 | 0 |
-| 两者都对 | 12 |
-| 两者都错 | 12 |
+250 条 badcase 汇总：
 
-唯一 LoRA 改进样本：
+| 类型 | 数量 | 占比 |
+|------|------|------|
+| LoRA 改进 | 6 | 2.4% |
+| LoRA 退化 | 1 | 0.4% |
+| 两者都对 | 113 | 45.2% |
+| 两者都错 | 130 | 52.0% |
+
+代表性 LoRA 改进样本：
 
 - 问题：`Is the percentage value of "STEM" segment 52?`
 - 标准答案：`Yes`
 - Base：`Yes, the percentage value of the "STEM" segment is 52%.`
 - LoRA：`Yes.`
 
-这说明当前 LoRA 的可见收益主要体现在更接近 ChartQA 短答案风格。典型失败样本主要集中在百分比差值、平均值和时间点判断等数值推理问题。
+另外，样本 73 和样本 235 显示 LoRA 在少量数值题上也能修正 Base 的错误。唯一退化样本来自 Base 已经给出 `No.`，但 LoRA 输出了更长解释，导致从精确匹配退化为部分匹配。
+
+结论：当前 LoRA 的主要收益是更贴近 ChartQA 的短答案风格，同时出现少量数值改进；主要短板仍是数值读取、数值计算和复杂图表推理。
 
 ## Demo
 
@@ -129,6 +133,7 @@ scripts/
 app.py
 reports/
   experiments.md
+  badcase_analysis_250_summary.md
   badcase_analysis.md
 tests/
 ```
@@ -184,8 +189,9 @@ python scripts/run_eval.py \
 
 ```bash
 python scripts/analyze_badcases.py \
-  --input-csv reports/eval_lora_1epoch_results.csv \
-  --output-md reports/badcase_analysis.md
+  --input-csv reports/eval_lora_1epoch_250_results.csv \
+  --output-md reports/badcase_analysis_250.md \
+  --max-cases 40
 ```
 
 启动 Demo：
@@ -207,11 +213,11 @@ python app.py \
 
 ## 后续计划
 
-- 基于 250 条评估结果生成更完整 badcase 报告，解释 LoRA 改进和退化样本。
+- 基于 250 条 badcase 筛选更适合 Demo 展示的样例。
 - 尝试更长 `max_seq_length`，例如 256 或 512。
 - 增加训练数据比例，如 `train[:3%]`。
 - 对比 LoRA rank：`r=8`、`r=16`。
-- 基于 badcase 构造更适合展示的 Demo 样例。
+- 围绕数值错误做更细的问题类型统计。
 
 ## 简历描述
 

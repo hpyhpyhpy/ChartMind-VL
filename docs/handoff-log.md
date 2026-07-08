@@ -500,3 +500,46 @@ python scripts/analyze_badcases.py \
 - 主要错误类型观察，例如数值错误、部分匹配、答案格式不一致等。
 
 ---
+## 2026-07-08 — Codex → Claude Code
+
+**交付内容：准备 Gradio Demo 展示样例素材**
+
+### Codex 本地完成情况
+
+- 读取 Claude Code 回传的 250 条 badcase 分析结果。
+- 新增 `reports/badcase_analysis_250_summary.md`，整理 250 条 badcase 摘要。
+- 更新 `README.md`，将 badcase 章节升级为 250 条分析口径。
+- 更新 `reports/experiments.md`，新增“实验 4：250 条 Badcase 分析”。
+- 更新 `project_state.md`，记录 250 条 badcase 结果。
+- 更新 `实习面试资料.md`，新增“阶段 9：250 条 Badcase 分析”的复盘和面试问答。
+
+### 下一步交给 Claude Code
+
+请在远端基于 250 条 badcase 结果整理 Demo 展示样例，生成：
+
+```text
+reports/demo_cases.md
+```
+
+优先选择：
+
+- LoRA 数值改进样本：例如样本 73、235。
+- LoRA 答案格式改进样本：例如样本 24、205。
+- LoRA 退化样本：样本 142。
+- 两者都错但有代表性的数值推理失败样本，选 2 条。
+
+如方便，请导出这些样本对应图片到：
+
+```text
+reports/demo_cases/
+```
+
+### 需要回传
+
+- 是否成功生成 `reports/demo_cases.md`。
+- 是否导出样本图片；如果导出，请说明路径。
+- 推荐用于 Demo 的 3-5 个样本 index。
+- 每个推荐样本的一句话展示话术。
+- 如果 Gradio 手动验证了样本，请说明结果。
+
+---

@@ -4,77 +4,82 @@
 
 ## 交付时间
 
-2026-07-08 13:41
+2026-07-08
 
 ## 本次任务
 
-请在远端 AutoDL RTX 4090D 环境基于 250 条评估结果生成更完整的 badcase 报告，并回传关键统计和代表样本。
+请在远端 AutoDL 环境基于 250 条 badcase 结果，准备一组适合 Gradio Demo 展示的样例素材。
 
 背景：
 
-- 1 epoch LoRA 已完成。
-- 100 条评估有小幅波动，250 条评估中 LoRA 三项指标均超过 Base：
+- 250 条评估中 LoRA 三项指标均超过 Base：
   - Exact Match：0.208 -> 0.224
   - Token F1：0.296 -> 0.315
   - Numeric Accuracy：0.456 -> 0.476
-- 现在需要解释 250 条结果中 LoRA 到底在哪些样本上改进、在哪些样本上退化。
+- 250 条 badcase 分析结果：
+  - LoRA 改进：6 条
+  - LoRA 退化：1 条
+  - 两者都对：113 条
+  - 两者都错：130 条
+- 当前需要把这些结果转成展示材料：哪些样本适合展示 LoRA 改进，哪些样本适合展示模型边界。
 
 ## Codex 已完成的本地改动
 
-- 更新 `README.md`，将当前主要结果从 25 条评估升级为 250 条评估口径。
-- 更新 `reports/experiments.md`，新增“实验 3：扩大评估样本量”。
-- 更新 `project_state.md`，记录 100 条和 250 条评估结果。
-- 更新 `实习面试资料.md`，新增“阶段 8：扩大评估样本量”的复盘和面试问答。
+- 新增 `reports/badcase_analysis_250_summary.md`，整理 250 条 badcase 摘要。
+- 更新 `README.md`，将 badcase 章节升级为 250 条分析口径。
+- 更新 `reports/experiments.md`，新增“实验 4：250 条 Badcase 分析”。
+- 更新 `project_state.md`，记录 250 条 badcase 结果。
+- 更新 `实习面试资料.md`，新增“阶段 9：250 条 Badcase 分析”的复盘和面试问答。
 
 ## 远端执行前提
 
 远端已有产物：
 
 - `reports/eval_lora_1epoch_250_results.csv`
-- `reports/eval_lora_1epoch_250_summary.json`
+- `reports/badcase_analysis_250.md`
 - `outputs/qwen25vl-chartqa-lora-1epoch/`
+- Gradio Demo 已验证可运行。
 
-注意：
+## 请执行的任务
 
-- 本次不需要重新训练。
-- 本次不需要重新跑评估，除非 250 条 CSV 文件缺失。
-- 只需要读取已有 CSV 并生成 badcase 报告。
+请从 250 条 badcase 结果中整理 Demo 展示样例，优先选择：
 
-## 请执行的命令
+1. LoRA 数值改进样本：例如样本 73、235。
+2. LoRA 答案格式改进样本：例如样本 24、205。
+3. LoRA 退化样本：样本 142，用于说明模型边界。
+4. 两者都错但有代表性的数值推理失败样本，选 2 条即可。
 
-进入项目环境：
+如果方便，请导出这些样本对应的图片到远端 `reports/demo_cases/`，并生成一个 Markdown 文件：
 
-```bash
-cvl
+```text
+reports/demo_cases.md
 ```
 
-生成 250 条 badcase 报告：
+每个样例请包含：
 
-```bash
-python scripts/analyze_badcases.py \
-  --input-csv reports/eval_lora_1epoch_250_results.csv \
-  --output-md reports/badcase_analysis_250.md \
-  --max-cases 40
-```
+- 样本 index
+- 图片路径
+- 问题
+- 标准答案
+- Base 回答
+- LoRA 回答
+- 展示用途：格式改进 / 数值改进 / 退化边界 / 共同失败
+- 一句话讲解
 
-查看报告开头：
+## 可选验证
 
-```bash
-sed -n '1,220p' reports/badcase_analysis_250.md
-```
+如果时间允许，请用 Gradio Demo 手动跑 2 个样本，确认页面上 Base/LoRA 输出与 CSV 记录一致或大体一致。
 
 ## 请交回 Codex
 
-- 命令是否跑通。
-- 如果失败，完整错误日志或关键报错。
-- `reports/badcase_analysis_250.md` 的汇总表。
-- LoRA 改进、LoRA 退化、两者都对、两者都错的数量。
-- 至少 3 个 LoRA 改进样本，包含问题、标准答案、Base 回答、LoRA 回答。
-- 至少 3 个 LoRA 退化样本，如果没有退化样本请说明。
-- 你观察到的主要错误类型，例如数值错误、部分匹配、答案格式不一致等。
+- 是否成功生成 `reports/demo_cases.md`。
+- 是否导出样本图片；如果导出，请说明路径。
+- 推荐用于 Demo 的 3-5 个样本 index。
+- 每个推荐样本的一句话展示话术。
+- 如果 Gradio 手动验证了样本，请说明结果。
 
 ## 判断标准
 
-- 如果 LoRA 改进样本主要是答案格式更短、更贴近标准答案，说明当前训练更多学到了 ChartQA 答案风格。
-- 如果 LoRA 对数值类问题也有明显改进，说明 adapter 不只是改了输出格式，还可能改善了图表问答能力。
-- 如果退化样本不少，下一步需要谨慎扩大训练，优先看退化集中在哪些题型。
+- Demo 样例不要只展示 LoRA 改进，也要保留至少 1 个边界样本。
+- 展示话术要诚实：当前 LoRA 是小幅改进，不是全面超越。
+- 优先选择能解释业务价值的样本，例如数值计算、颜色数量、Yes/No 判断。
