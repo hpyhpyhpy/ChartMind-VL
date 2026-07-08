@@ -57,15 +57,25 @@
 - Checkpoint 保存：4.9 MB LoRA adapter（adapter_model.safetensors + adapter_config.json）
 - GPU 显存：训练后正常释放至 1 MiB
 
+### Base vs LoRA 评估入口
+
+- 新增 `docs/superpowers/specs/2026-07-08-base-vs-lora-eval-design.md` 和 `docs/superpowers/plans/2026-07-08-base-vs-lora-eval.md`，明确评估阶段范围。
+- 新增 `src/chartvqa/evaluation.py`，实现文本归一化、Exact Match、Token F1、Numeric Accuracy、单条打分和按模式汇总。
+- 新增 `src/chartvqa/inference.py`，封装 base model 与可选 LoRA adapter 的推理入口。
+- 新增 `scripts/run_eval.py`，支持 `base`、`lora`、`both` 三种评估模式，并输出 `reports/eval_results.csv` 与 `reports/eval_summary.json`。
+- 新增 `scripts/run_eval_smoke.py`，封装 20 条小样本 base vs LoRA 评估 smoke test。
+- 新增 `tests/test_evaluation.py`、`tests/test_run_eval_script.py`、`tests/test_run_eval_smoke_script.py`，在本地验证指标口径和评估脚本参数解析。
+- 更新 `docs/handoff-to-claude.md` 和 `docs/handoff-log.md`，将小样本评估任务交给 Claude Code 远端执行。
+
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：Smoke test 已完成，训练全链路已跑通。
+- 当前阶段：Smoke test 已完成，训练全链路已跑通；base vs LoRA 评估入口已完成，等待远端 AutoDL 执行小样本评估。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：交给 Codex 进行 base vs LoRA 评估、badcase 分析、Gradio Demo。
+- 下一步：在 AutoDL 上运行 `scripts/run_eval.py` 生成 base vs LoRA 评估结果，再进入 badcase 分析和 Gradio Demo。
