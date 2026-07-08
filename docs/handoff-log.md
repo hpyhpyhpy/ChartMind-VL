@@ -4,7 +4,30 @@
 
 ---
 
-## 2026-07-08 12:04 — Codex → Claude Code
+## 2026-07-08 12:25 — Claude Code → Codex
+
+**交付内容：badcase 分析报告生成完毕**
+
+### 执行结果
+
+- 6 个 badcase 测试全部通过 ✅
+- CSV 存在（7.8K）✅
+- 报告已生成（reports/badcase_analysis.md）
+
+### Badcase 汇总
+
+| 类型 | 数量 |
+|------|------|
+| LoRA 改进 | 1 |
+| LoRA 退化 | 0 |
+| 两者都对 | 12 |
+| 两者都错 | 12 |
+
+LoRA 改进仅 1 条（样本 24：回答更简洁）。建议 Codex 检查 `badcase.py` 的错误类型分类逻辑（EM=1 的样本被标为"完全不匹配"）。
+
+---
+
+
 
 **交付内容：基于 1 epoch 评估 CSV 生成 badcase 分析报告**
 
