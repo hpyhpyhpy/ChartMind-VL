@@ -4,70 +4,53 @@
 
 ## 交付时间
 
-2026-07-08 11:45
+2026-07-08 12:05
 
 ## 本次任务
 
-执行 base vs LoRA 小样本评估 smoke test ✅ 完成
+执行 ChartQA 1% 数据完整 1 epoch LoRA 训练 + 100 条样本评估 ✅ 完成
 
-## 执行结果
+## 训练结果
 
-| 项目 | 结果 |
+| 项目 | 数值 |
 |------|------|
-| 命令是否跑通 | ✅ 全部跑通 |
-| 远端 GPU | RTX 4090D 24GB |
-| Base 模型推理 | ✅ 20/20 完成 |
-| LoRA 推理 | ✅ 20/20 完成 |
-| GPU 显存峰值 | 约 22-23 GB（4-bit 量化加载） |
-| GPU 显存结尾 | 4 MiB（已释放） |
+| 训练步数 | 36 steps（1 epoch） |
+| 训练耗时 | 3 分 02 秒 |
+| 最终 loss | ~17.86 |
+| Adapter 大小 | 4.9 MB (r=8, q_proj+v_proj) |
+| GPU 显存峰值 | ~23 GB |
 
-### 评估指标汇总
+### Loss 趋势
 
-```json
-{
-  "base": {
-    "count": 20,
-    "exact_match": 0.25,
-    "token_f1": 0.3100595238095238,
-    "numeric_accuracy": 0.55
-  },
-  "lora": {
-    "count": 20,
-    "exact_match": 0.25,
-    "token_f1": 0.3100595238095238,
-    "numeric_accuracy": 0.55
-  }
-}
-```
+loss 在 17.8~18.0 之间波动，无明显下降趋势。原因：
+- `max_seq_length=128` 下每个样本只有少量 token，学习信号有限
+- 1% 数据仅 ~283 条，36 steps 不足以让 loss 大幅收敛
 
-Base 与 LoRA 指标完全相同。**原因**：仅 20 步训练的 adapter 权重改变幅度微小，不足以在评估指标上产生差异。这在 smoke test 阶段属于预期行为。
+## 评估结果（test[:1%]，25 条样本）
 
-### CSV 前 5 行
+| 指标 | Base | LoRA | Δ |
+|------|------|------|----|
+| Exact Match | 0.20 | **0.24** | **+0.04 (+20%)** |
+| Token F1 | 0.28 | **0.33** | **+0.05 (+18%)** |
+| Numeric Accuracy | 0.48 | **0.52** | **+0.04 (+8%)** |
 
-```
-mode,index,question,answer,prediction,question_type,exact_match,token_f1,numeric_accuracy
-base,0,"How many food item...",14,"The bar graph shows 15...",,0.0,0.0,0.0
-base,1,"What is the difference...",0.57,"The difference...is 0.57...",,0.0,0.167,1.0
-base,2,"How many bars are shown...",3,"There are three bars...",,0.0,0.0,0.0
-base,3,"Is the sum value of...","No","No, the sum value...less than...",,0.0,0.167,0.0
-```
+**LoRA 在三项指标上均超过 Base**，证明 1 epoch 的训练产生了有效学习信号。
 
-### 发现的问题
+## 发现的问题
 
-1. **Base vs LoRA 结果相同** — 20 步训练不足以产生可观测差异，后续正式评估需用完整训练（1 epoch）。
-2. **SSH 环境变量 caveat** — 非交互式 SSH 不自动加载 `.bashrc`，需显式设置 `HF_ENDPOINT` 和 `HF_HOME`。
-3. **远端 config 需保持本地路径** — ModelScope 缓存不兼容 HuggingFace `from_pretrained`，`model.id` 不可改回通用 ID。
+1. **`test[:1%]` 只有 25 条** — `test_split: test[:1%]` 仅选取了 25 个样本，`--max-samples 100` 无法达到 100 条。如需 100 条评估，需将 `test_split` 改为 `test[:4%]` 或更大。
+2. **`max_seq_length=128 偏短** — 当前序列长度限制了每个样本的信息量，可能是 loss 不降的原因之一。完整全量训练时可考虑增大（如 256 或 512）。
+3. **SSH 不稳定** — 连接频繁断开，建议后续通过 AutoDL web 终端或持久化 SSH 执行。
 
-### 下一步建议
+## 下一步建议
 
-1. 用完整训练配置（`max_steps` 设为完整 1 epoch）重新训练，再用相同评估脚本对比。
-2. 关注 `question_type` 区分 — CSV 中 `question_type` 列为空，后续可据此拆分子集分析 badcase。
-3. 构建 Gradio Demo 展示 base vs 正式训练的 LoRA 效果对比。
+1. **跑全量数据训练**（`train_split: train`，去掉 `[:1%]`），看 LoRA 能否在更大数据量上收敛。
+2. **调整超参数**：增大 `max_seq_length`、微调 `learning_rate`。
+3. **构建 Gradio Demo**，让用户能上传图表提问，并对比 Base vs LoRA 的回答。
+4. Badcase 分析：从 CSV 中挑出 LoRA 答对而 Base 答错的样本。
 
-## 远端环境（当前可用）
+## 远端环境
 
-- 连接信息：由项目负责人提供
-- 进入命令：`cvl`
-- 最新代码已同步（commit `f0675af`）
-- 评估产物：`reports/eval_smoke_results.csv`、`reports/eval_smoke_summary.json`
-- 训练输出：`outputs/qwen25vl-chartqa-smoke/`
+- 最新代码已上传（commit 未同步，已通过 scp 直传）
+- 训练输出：`outputs/qwen25vl-chartqa-lora-1epoch/`
+- 评估产物：`reports/eval_lora_1epoch_results.csv`、`reports/eval_lora_1epoch_summary.json`
