@@ -91,15 +91,22 @@
 - 修复 `src/chartvqa/badcase.py` 中的错误类型标注问题：EM=1 或 numeric=1 的正确预测现在标记为 `回答正确`，不再误标为 `完全不匹配`。
 - 新增测试覆盖正确预测的错误类型标注。
 
+### Gradio Demo 入口
+
+- 新增 `app.py`，提供 Gradio Demo 入口，支持上传图表/报表图片、输入问题、选择 Base 或 LoRA 模式并生成回答。
+- Demo 默认使用 `configs/qwen25vl_chartqa_lora_1epoch.yaml` 和 `outputs/qwen25vl-chartqa-lora-1epoch`。
+- 新增 `tests/test_app.py`，在本地验证 Demo 默认参数、Base/LoRA adapter 选择逻辑和输入校验；本地不启动 Gradio、不加载大模型。
+- 更新 `docs/handoff-to-claude.md` 和 `docs/handoff-log.md`，将远端 Demo 启动验证交给 Claude Code。
+
 当前状态：
 
 - 仓库：`ChartMind-VL`
 - 主项目方向：面向企业图表与报表的多模态问答微调系统。
 - 主技术路线：Qwen2.5-VL + ChartQA + 4-bit QLoRA + AutoDL 4090D。
-- 当前阶段：1 epoch LoRA 训练和 25 条样本评估已完成，LoRA 指标开始超过 Base；badcase 分析报告初版已生成，Codex 已修复错误类型标注逻辑，等待远端重跑报告。
+- 当前阶段：1 epoch LoRA 训练和 25 条样本评估已完成，LoRA 指标开始超过 Base；badcase 报告已重跑验证；Gradio Demo 入口已完成，等待远端启动验证。
 - 远端实验路径：`/root/autodl-tmp/ChartMind-VL/`（数据盘）
   - venv: `/root/autodl-tmp/venv/chartvqa/`
   - 模型缓存: `/root/autodl-tmp/.cache/huggingface/models/Qwen--Qwen2.5-VL-7B-Instruct/snapshots/master/`
   - 训练输出: `outputs/qwen25vl-chartqa-smoke/`
   - 快速进入: `cvl` 别名
-- 下一步：让 Claude Code 用修复后的 badcase 逻辑重新生成 `reports/badcase_analysis.md`；随后基于 LoRA 改进样本和典型失败样本启动 Gradio Demo。
+- 下一步：让 Claude Code 在 AutoDL 上启动 `app.py`，验证 Gradio Demo 可访问，并用 LoRA 改进样本与典型失败样本做人工体验检查。

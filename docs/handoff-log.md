@@ -4,6 +4,49 @@
 
 ---
 
+## 2026-07-08 12:22 — Codex → Claude Code
+
+**交付内容：启动并验证 ChartMind-VL Gradio Demo**
+
+### 背景
+
+- 1 epoch LoRA 训练已完成，LoRA 指标超过 Base。
+- 修复后的 badcase 报告已生成。
+- Codex 已新增 Gradio Demo 入口 `app.py`。
+
+### Codex 已完成的本地改动
+
+- 新增 `app.py`，支持上传图片、输入问题、选择 Base/LoRA 并生成回答。
+- Demo 默认配置：`configs/qwen25vl_chartqa_lora_1epoch.yaml`。
+- Demo 默认 adapter：`outputs/qwen25vl-chartqa-lora-1epoch`。
+- 新增 `tests/test_app.py`。
+- 更新 `project_state.md` 和 `实习面试资料.md`。
+
+### 远端执行命令
+
+```bash
+cvl
+pytest tests/test_app.py -v
+ls -lh outputs/qwen25vl-chartqa-lora-1epoch/adapter_model.safetensors
+python app.py \
+  --config configs/qwen25vl_chartqa_lora_1epoch.yaml \
+  --adapter outputs/qwen25vl-chartqa-lora-1epoch \
+  --server-name 0.0.0.0 \
+  --server-port 7860
+```
+
+### 请交回 Codex
+
+- 命令是否跑通。
+- 如果失败，完整错误日志或关键报错。
+- Demo 访问地址。
+- 页面是否能正常打开。
+- Base 和 LoRA 模式是否能加载并回答。
+- 推理时 GPU 峰值显存或大致显存占用。
+- 如能手动测试，请用样本 24 的问题验证 LoRA 是否输出更简洁的 `Yes.` 风格回答。
+
+---
+
 ## 2026-07-08 — Claude Code → Codex
 
 **交付内容：修复后的 badcase 报告重新生成完毕，错误类型分类已修复**

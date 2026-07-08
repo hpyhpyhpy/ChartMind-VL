@@ -4,25 +4,24 @@
 
 ## 交付时间
 
-2026-07-08 12:30
+2026-07-08 12:22
 
 ## 本次任务
 
-请在远端 AutoDL RTX 4090D 环境使用修复后的 badcase 逻辑，重新生成 **badcase 分析报告**。
+请在远端 AutoDL RTX 4090D 环境启动并验证 **ChartMind-VL Gradio Demo**。
 
 背景：
 
-- 1 epoch LoRA 训练已跑通，耗时 3 分 02 秒。
-- LoRA 在 25 条 test 样本上三项指标均超过 Base。
-- 评估结果已在远端 `reports/eval_lora_1epoch_results.csv`。
-- 初版 badcase 报告已生成：LoRA 改进 1 条、LoRA 退化 0 条、两者都对 12 条、两者都错 12 条。
-- Claude Code 发现错误类型分类有误：EM=1 的正确样本被标成 `完全不匹配`。
-- Codex 已修复 `src/chartvqa/badcase.py`，正确预测现在标记为 `回答正确`。
+- 1 epoch LoRA 训练已完成，LoRA 在 25 条样本上三项指标均超过 Base。
+- 修复后的 badcase 报告已生成。
+- Codex 已新增 `app.py`，提供上传图片、输入问题、选择 Base/LoRA 并生成回答的 Demo 入口。
 
 ## Codex 已完成的本地改动
 
-- 修复 `src/chartvqa/badcase.py`：`describe_error_type()` 先判断 `_is_correct(row)`，正确预测返回 `回答正确`。
-- 更新 `tests/test_badcase.py`，新增正确预测错误类型测试。
+- 新增 `app.py`，支持上传图片、输入问题、选择 Base/LoRA 并生成回答。
+- Demo 默认配置：`configs/qwen25vl_chartqa_lora_1epoch.yaml`。
+- Demo 默认 adapter：`outputs/qwen25vl-chartqa-lora-1epoch`。
+- 新增 `tests/test_app.py`。
 - 更新 `project_state.md` 和 `实习面试资料.md`。
 
 ## 远端执行前提
@@ -33,13 +32,14 @@
 - venv：`/root/autodl-tmp/venv/chartvqa/`
 - 快速进入命令：`cvl`
 - LoRA adapter：`outputs/qwen25vl-chartqa-lora-1epoch/`
-- 评估 CSV：`reports/eval_lora_1epoch_results.csv`
 - Qwen2.5-VL 模型已缓存到数据盘。
+- Gradio 已安装在远端环境中。
 
 注意：
 
-- 本次只重新生成 badcase 报告，不需要重新训练。
-- 如果远端还没有同步最新代码，请先同步 Codex 修复后的 `src/chartvqa/badcase.py` 和 `tests/test_badcase.py`。
+- 本次只验证 Demo 启动和基础交互，不需要重新训练。
+- 如果远端还没有同步最新代码，请先同步 `app.py` 和 `tests/test_app.py`。
+- 远端 `configs/qwen25vl_chartqa_lora_1epoch.yaml` 的 `model.id` 仍需保持本地模型路径。
 
 ## 请执行的命令
 
@@ -49,54 +49,49 @@
 cvl
 ```
 
-确认最新代码已同步后，先跑 badcase 相关测试：
+确认最新代码已同步后，先跑 Demo 相关测试：
 
 ```bash
-pytest tests/test_badcase.py tests/test_analyze_badcases_script.py -v
+pytest tests/test_app.py -v
 ```
 
-确认评估 CSV 存在：
+确认 adapter 存在：
 
 ```bash
-ls -lh reports/eval_lora_1epoch_results.csv
+ls -lh outputs/qwen25vl-chartqa-lora-1epoch/adapter_model.safetensors
 ```
 
-重新生成 badcase 报告：
+启动 Demo：
 
 ```bash
-python scripts/analyze_badcases.py \
-  --input-csv reports/eval_lora_1epoch_results.csv \
-  --output-md reports/badcase_analysis.md \
-  --max-cases 25
+python app.py \
+  --config configs/qwen25vl_chartqa_lora_1epoch.yaml \
+  --adapter outputs/qwen25vl-chartqa-lora-1epoch \
+  --server-name 0.0.0.0 \
+  --server-port 7860
 ```
 
-## 预期产物
+## 预期结果
 
-请确认以下文件生成：
-
-- `reports/badcase_analysis.md`
+请确认 Gradio Demo 可以访问，并至少完成一次页面加载。
 
 请将以下信息交回 Codex：
 
 - 命令是否跑通。
 - 如果失败，完整错误日志或关键报错。
-- `reports/badcase_analysis.md` 内容。
-- badcase 汇总表中 `LoRA 改进`、`LoRA 退化`、`两者都对`、`两者都错` 的数量。
-- 确认 EM=1 或 numeric=1 的样本是否已显示为 `回答正确`。
-- 挑出 1 个 LoRA 改进样本和 2-3 个典型失败样本，供后续 Demo 或 README 使用。
+- Demo 本地或公网访问地址。
+- 页面是否能正常打开。
+- Base 模式是否能加载并回答。
+- LoRA 模式是否能加载并回答。
+- 推理时 GPU 峰值显存或大致显存占用。
+- 如能手动测试，请用样本 24 的问题验证 LoRA 是否输出更简洁的 `Yes.` 风格回答。
 
 ## 可能风险
 
-- 如果报告中没有 `LoRA 改进` 样本，也请如实反馈。这可能是因为 25 条样本太少。
-- 如果远端 CSV 只有 base 或只有 LoRA 行，说明评估文件不完整，需要重新运行评估脚本。
+- Demo 首次点击会加载模型，可能比较慢。
+- Base 与 LoRA 两种模式分别加载模型，显存可能接近 22-23 GB。如 OOM，可只测 LoRA 模式，或重启进程后单独测 Base。
+- 如果 `model.id` 路径报错，请检查远端配置是否仍指向本地模型缓存路径。
 
 ```bash
-python scripts/run_eval.py \
-  --config configs/qwen25vl_chartqa_lora_1epoch.yaml \
-  --mode both \
-  --adapter outputs/qwen25vl-chartqa-lora-1epoch \
-  --split test \
-  --max-samples 100 \
-  --output-csv reports/eval_lora_1epoch_results.csv \
-  --summary-json reports/eval_lora_1epoch_summary.json
+python app.py --config configs/qwen25vl_chartqa_lora_1epoch.yaml --adapter outputs/qwen25vl-chartqa-lora-1epoch
 ```
